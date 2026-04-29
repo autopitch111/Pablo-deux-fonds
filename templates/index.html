@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/><title>HookMeme Studio</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e0e0e;--panel:#161616;--card:#1e1e1e;--card2:#242424;
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.14);
+  --text:#e8e8e8;--muted:#555;--muted2:#888;
+  --blue:#3b82f6;--green:#22c55e;--amber:#f59e0b;--red:#ef4444;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;overflow:hidden}
+
+/* TOP BAR */
+header{position:fixed;top:0;left:0;right:0;height:46px;background:rgba(14,14,14,.95);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:8px;z-index:200}
+.logo{font-size:14px;font-weight:700;letter-spacing:-.3px;display:flex;align-items:center;gap:7px;margin-right:4px}
+.logo-dot{width:7px;height:7px;border-radius:50%;background:#e8e8e8}
+.hdr-sep{width:1px;height:18px;background:var(--border);flex-shrink:0}
+.hdr-btn{display:flex;align-items:center;gap:5px;padding:5px 9px;border-radius:6px;border:none;background:transparent;color:var(--muted2);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;user-select:none;white-space:nowrap}
+.hdr-btn:hover{background:rgba(255,255,255,.06);color:var(--text)}
+.hdr-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:6px}
+.pill{display:flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500}
+.pill-ok{background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.2)}
+.pill-warn{background:rgba(239,68,68,.08);color:#f87171;border:1px solid rgba(239,68,68,.18)}
+.pill-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+
+/* DOWNLOAD TRAY (Chrome style) */
+#dl-tray{position:fixed;top:50px;right:12px;display:flex;flex-direction:column;gap:6px;z-index:300;pointer-events:none}
+.dl-notif{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--panel);border:1px solid var(--border2);border-radius:9px;box-shadow:0 4px 20px rgba(0,0,0,.5);font-size:12px;pointer-events:all;animation:slideIn .2s ease;min-width:220px}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.dl-notif-ico{font-size:16px;flex-shrink:0}
+.dl-notif-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.dl-notif-status{font-size:10px;color:var(--green)}
+.dl-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0 2px;flex-shrink:0}
+.dl-close:hover{color:var(--text)}
+#dl-history-btn{position:relative}
+#dl-badge{position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:var(--blue);font-size:8px;font-weight:700;color:#fff;display:none;align-items:center;justify-content:center}
+#dl-dropdown{position:absolute;top:38px;right:0;width:280px;background:var(--panel);border:1px solid var(--border2);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.5);overflow:hidden;display:none;z-index:400}
+#dl-dropdown.open{display:block}
+.dl-dd-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--border);font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.07em}
+.dl-dd-clear{font-size:10px;color:var(--muted);cursor:pointer;font-weight:400;text-transform:none;letter-spacing:0;border:none;background:none;padding:2px 6px;border-radius:4px}
+.dl-dd-clear:hover{color:var(--text);background:rgba(255,255,255,.06)}
+.dl-item{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;transition:background .15s;border-bottom:1px solid var(--border)}
+.dl-item:last-child{border-bottom:none}
+.dl-item:hover{background:rgba(255,255,255,.04)}
+.dl-item-name{flex:1;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dl-item-dl{font-size:10px;color:var(--blue);border:none;background:none;cursor:pointer;padding:2px 6px;border-radius:4px}
+.dl-item-dl:hover{background:rgba(59,130,246,.15)}
+
+/* CANVAS */
+#canvas{position:fixed;inset:46px 0 0 0;overflow:hidden;background:#111;background-image:radial-gradient(circle,rgba(255,255,255,.04) 1px,transparent 1px);background-size:22px 22px;cursor:default}
+#ci{position:absolute;inset:0;transform-origin:0 0}
+
+/* WIDGET */
+.wgt{position:absolute;background:var(--panel);border:1px solid var(--border2);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.5);overflow:hidden;min-width:180px;min-height:60px;display:flex;flex-direction:column}
+.wgt-resize{position:absolute;bottom:0;right:0;width:16px;height:16px;cursor:nwse-resize;z-index:20;background:linear-gradient(135deg,transparent 50%,rgba(255,255,255,.12) 50%);border-bottom-right-radius:12px}
+.wgt-bar{display:flex;align-items:center;gap:8px;padding:0 12px;height:34px;background:var(--card);border-bottom:1px solid var(--border);cursor:grab;user-select:none;flex-shrink:0}
+.wgt-bar:active{cursor:grabbing}
+.wgt-dots{display:flex;gap:5px}
+.wd{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.08);cursor:pointer;flex-shrink:0;transition:background .15s}
+.wd:hover{background:rgba(255,255,255,.2)}
+.wd.x{background:rgba(239,68,68,.4)}.wd.x:hover{background:var(--red)}
+.wgt-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted2)}
+.wgt-spacer{flex:1}
+.wgt-body{padding:12px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;flex:1;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.07) transparent}
+.wgt-body::-webkit-scrollbar{width:3px}
+.wgt-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
+
+/* DROP ZONE */
+.drop-zone{border:1.5px dashed rgba(255,255,255,.12);border-radius:10px;padding:20px 12px;text-align:center;cursor:pointer;transition:all .2s;flex-shrink:0}
+.drop-zone:hover,.drop-zone.over{border-color:rgba(255,255,255,.35);background:rgba(255,255,255,.03)}
+.drop-zone .dz-ico{font-size:24px;margin-bottom:6px}
+.drop-zone p{font-size:11px;color:var(--muted2);line-height:1.7}
+.drop-zone b{color:var(--text)}
+input[type=file]{display:none}
+
+/* THUMB GRID */
+.thumb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.tcard{position:relative;border-radius:7px;overflow:hidden;cursor:pointer;aspect-ratio:9/16;background:var(--card2);border:1.5px solid transparent;transition:all .15s;flex-shrink:0}
+.tcard:hover{border-color:rgba(255,255,255,.2)}
+.tcard.sel{border-color:rgba(255,255,255,.7)}
+.tcard.sel-meme{border-color:var(--blue)}
+.tcard img{width:100%;height:100%;object-fit:cover;display:block}
+.tcard .tc-del{position:absolute;top:3px;right:3px;width:16px;height:16px;border-radius:4px;background:rgba(0,0,0,.6);border:none;color:#fff;font-size:9px;cursor:pointer;display:none;align-items:center;justify-content:center}
+.tcard:hover .tc-del{display:flex}
+.tcard .tc-check{position:absolute;bottom:3px;left:3px;width:14px;height:14px;border-radius:3px;background:rgba(255,255,255,.8);display:none;align-items:center;justify-content:center;font-size:9px;color:#000}
+.tcard.sel .tc-check,.tcard.sel-meme .tc-check{display:flex}
+.tc-name{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.7));padding:10px 4px 3px;font-size:9px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* PHONE */
+.iphone{width:220px;height:462px;background:linear-gradient(155deg,#2a2a2c,#1a1a1c);border-radius:44px;border:1.5px solid rgba(255,255,255,.13);box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.8),0 24px 60px rgba(0,0,0,.7);position:relative;overflow:hidden;flex-shrink:0}
+.di{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:80px;height:24px;background:#000;border-radius:18px;z-index:10}
+.iscreen{width:100%;height:100%;background:#000;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.iscreen video{width:100%;height:100%;object-fit:cover}
+.iempty{display:flex;flex-direction:column;align-items:center;gap:6px;opacity:.25}
+.iempty-ico{font-size:28px}
+.iempty p{font-size:10px;color:#fff;text-align:center}
+.ihome{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:80px;height:4px;background:rgba(255,255,255,.25);border-radius:2px}
+.ioverlay{position:absolute;bottom:0;left:0;right:0;z-index:5;pointer-events:none;background:linear-gradient(transparent,rgba(0,0,0,.6));padding:8px 10px 22px}
+.ihook{font-size:11px;font-weight:800;color:#fff;line-height:1.4;text-shadow:0 1px 6px rgba(0,0,0,.8)}
+.iactions{position:absolute;right:7px;bottom:44px;z-index:5;pointer-events:none;display:flex;flex-direction:column;gap:12px}
+.iact{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:13px}
+
+/* TIMELINE */
+.tl-wrap{width:220px;flex-shrink:0}
+.tl-lbl{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-bottom:4px}
+.tl-track{position:relative;height:5px;background:rgba(255,255,255,.07);border-radius:3px}
+.tl-a{height:100%;border-radius:3px;background:rgba(255,255,255,.22);position:absolute;left:0}
+.tl-b{height:100%;border-radius:3px;background:rgba(59,130,246,.55);position:absolute}
+.tl-cut{position:absolute;top:-5px;width:2px;height:15px;background:var(--amber);border-radius:1px}
+.tl-cut::after{content:"coupe";position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:8px;color:var(--amber);font-weight:700;white-space:nowrap}
+
+/* BUILDER FIELDS */
+.field-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:5px}
+.sel-row{display:flex;align-items:center;gap:8px;padding:8px;background:var(--card2);border-radius:8px;border:1px solid var(--border);min-height:44px}
+.sel-thumb{width:32px;height:32px;border-radius:5px;object-fit:cover;background:var(--border);flex-shrink:0}
+.sel-info{flex:1;min-width:0}
+.sel-name{font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sel-sub{font-size:10px;color:var(--muted)}
+.sel-empty{font-size:11px;color:var(--muted);font-style:italic}
+textarea.hook-ta{width:100%;padding:8px 10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;font-family:inherit;resize:none;outline:none;transition:border-color .15s;line-height:1.5;-webkit-user-select:text;user-select:text}
+textarea.hook-ta:focus{border-color:rgba(255,255,255,.25)}
+textarea.hook-ta::placeholder{color:var(--muted)}
+.radio-row{display:flex;gap:6px}
+.radio-lbl{flex:1;display:flex;align-items:center;gap:6px;padding:7px 10px;background:var(--card2);border-radius:7px;border:1.5px solid var(--border);cursor:pointer;transition:border-color .15s;font-size:11px}
+.radio-lbl input{accent-color:var(--text)}
+.gen-btn{width:100%;padding:10px;border-radius:8px;border:none;background:var(--text);color:#0e0e0e;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;letter-spacing:-.2px;flex-shrink:0}
+.gen-btn:hover{background:#fff;transform:translateY(-1px);box-shadow:0 4px 16px rgba(255,255,255,.1)}
+.gen-btn:disabled{opacity:.3;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* OUTPUT */
+.out-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.ocard{background:var(--card2);border-radius:9px;overflow:hidden;border:1px solid var(--border);transition:border-color .15s}
+.ocard:hover{border-color:rgba(255,255,255,.2)}
+.ocard-thumb{width:100%;aspect-ratio:9/16;object-fit:cover;display:block;cursor:pointer}
+.ocard-foot{padding:6px 8px;display:flex;align-items:center;gap:4px}
+.ocard-name{flex:1;font-size:9px;color:var(--muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ocard-btn{background:none;border:1px solid var(--border);color:var(--muted2);font-size:10px;border-radius:5px;padding:2px 7px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.ocard-btn:hover{border-color:rgba(255,255,255,.25);color:var(--text)}
+.ocard-btn.primary{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.2);color:var(--green)}
+.ocard-btn.primary:hover{background:rgba(34,197,94,.2)}
+
+/* HOOK LIBRARY */
+.hook-chips{display:flex;flex-wrap:wrap;gap:5px}
+.hchip{display:flex;align-items:center;gap:5px;padding:4px 10px;background:var(--card2);border:1px solid var(--border);border-radius:20px;font-size:11px;cursor:pointer;transition:all .15s;max-width:100%}
+.hchip:hover{border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.05)}
+.hchip-txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
+.hchip-del{flex-shrink:0;background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:0;line-height:1;transition:color .15s}
+.hchip-del:hover{color:var(--red)}
+.hook-add-row{display:flex;gap:6px}
+.hook-add-inp{flex:1;padding:7px 10px;background:var(--card2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;outline:none;transition:border-color .15s;-webkit-user-select:text;user-select:text}
+.hook-add-inp:focus{border-color:rgba(255,255,255,.25)}
+.hook-add-inp::placeholder{color:var(--muted)}
+.icon-btn{padding:7px 10px;border-radius:7px;border:1px solid var(--border2);background:rgba(255,255,255,.04);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.icon-btn:hover{background:rgba(255,255,255,.08)}
+
+/* AUTO PLANNING */
+.auto-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--card2);border-radius:8px;border:1px solid var(--border)}
+.auto-label{font-size:12px;font-weight:500}
+.toggle{position:relative;width:36px;height:20px;flex-shrink:0;cursor:pointer}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;background:rgba(255,255,255,.1);border-radius:10px;transition:background .2s;border:1px solid rgba(255,255,255,.1)}
+.toggle input:checked+.toggle-track{background:var(--green);border-color:var(--green)}
+.toggle-thumb{position:absolute;top:2px;left:2px;width:14px;height:14px;background:#fff;border-radius:50%;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.toggle input:checked~.toggle-thumb{left:18px}
+.sched-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.sched-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+select.sel-inp,input.sel-inp{width:100%;padding:7px 9px;background:var(--card2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;outline:none;transition:border-color .15s;font-family:inherit}
+select.sel-inp:focus,input.sel-inp:focus{border-color:rgba(255,255,255,.25)}
+select.sel-inp option{background:#1e1e1e}
+.next-run{font-size:10px;color:var(--amber);padding:6px 10px;background:rgba(245,158,11,.06);border-radius:6px;border:1px solid rgba(245,158,11,.15)}
+.info-box{font-size:11px;color:var(--muted2);line-height:1.6;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:7px;border:1px solid var(--border)}
+
+/* PROGRESS */
+.prog-wrap{background:var(--card2);border-radius:8px;padding:10px;border:1px solid var(--border);flex-shrink:0}
+.prog-bar{height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;margin-bottom:6px}
+.prog-fill{height:100%;border-radius:2px;background:var(--blue);width:0%;transition:width .3s}
+.prog-fill.spin{animation:spin 1.2s ease infinite}
+@keyframes spin{0%{width:0;margin-left:0}50%{width:55%;margin-left:20%}100%{width:0;margin-left:100%}}
+.prog-msg{font-size:10px;color:var(--muted)}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);z-index:500;display:flex;align-items:center;justify-content:center}
+.modal-bg.h{display:none}
+.modal{background:var(--panel);border:1px solid var(--border2);border-radius:14px;padding:22px;width:360px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.modal h3{font-size:14px;font-weight:700;margin-bottom:5px}
+.modal p{font-size:11px;color:var(--muted2);margin-bottom:14px;line-height:1.6}
+.modal input{width:100%;padding:9px 11px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;outline:none;margin-bottom:10px;-webkit-user-select:text;user-select:text}
+.modal input:focus{border-color:rgba(255,255,255,.25)}
+.modal-foot{display:flex;gap:7px;justify-content:flex-end}
+.btn-g{padding:7px 14px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted2);font-size:12px;cursor:pointer;transition:all .15s}
+.btn-g:hover{background:rgba(255,255,255,.05);color:var(--text)}
+.btn-s{padding:7px 14px;border-radius:6px;border:none;background:var(--text);color:#0e0e0e;font-size:12px;font-weight:700;cursor:pointer}
+
+/* TOAST */
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--panel);border:1px solid var(--border2);border-radius:8px;padding:8px 14px;font-size:12px;z-index:600;opacity:0;transition:all .2s;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,.5);white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* PHONE CONTROLS */
+.wgt-icon-btn{background:none;border:none;color:var(--muted2);cursor:pointer;padding:3px;border-radius:5px;display:flex;align-items:center;transition:all .15s;flex-shrink:0}
+.wgt-icon-btn:hover{background:rgba(255,255,255,.08);color:var(--text)}
+.wgt-icon-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2}
+.phone-ctrl-bar{display:flex;align-items:center;justify-content:center;gap:8px;width:220px;flex-shrink:0}
+.phone-ctrl-btn{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:rgba(255,255,255,.03);color:var(--muted2);font-size:10px;font-weight:500;cursor:pointer;transition:all .15s;flex:1;justify-content:center}
+.phone-ctrl-btn:hover{background:rgba(255,255,255,.07);color:var(--text);border-color:var(--border2)}
+.phone-ctrl-btn.active{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3);color:#f87171}
+.phone-ctrl-btn svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0}
+
+/* OPTIONS TOGGLES */
+.opt-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--card2);border-radius:7px;border:1px solid var(--border)}
+.opt-label{font-size:11px;color:var(--muted2)}
+
+/* EXPAND MODAL */
+#expand-modal{position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(16px);z-index:800;display:flex;align-items:center;justify-content:center}
+#expand-modal.h{display:none}
+.expand-phone{width:340px;height:714px;background:linear-gradient(155deg,#2a2a2c,#1a1a1c);border-radius:54px;border:2px solid rgba(255,255,255,.15);box-shadow:inset 0 0 0 2px rgba(0,0,0,.8),0 40px 80px rgba(0,0,0,.8);position:relative;overflow:hidden;flex-shrink:0}
+.expand-di{position:absolute;top:14px;left:50%;transform:translateX(-50%);width:110px;height:30px;background:#000;border-radius:20px;z-index:10}
+#expand-screen{width:100%;height:100%;background:#000;overflow:hidden;display:flex;align-items:center;justify-content:center}
+#expand-screen video{width:100%;height:100%;object-fit:cover}
+.expand-home{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:100px;height:5px;background:rgba(255,255,255,.25);border-radius:3px}
+.expand-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:var(--text);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.expand-close:hover{background:rgba(255,255,255,.2)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><div class="logo-dot"></div>HookMeme</div>
+  <div class="hdr-sep"></div>
+  <button class="hdr-btn" onclick="showWidget('vid-wgt')"><svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>Vidéos</button>
+  <button class="hdr-btn" onclick="showWidget('meme-wgt')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>Mèmes</button>
+  <button class="hdr-btn" onclick="showWidget('build-wgt')"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>Builder</button>
+  <button class="hdr-btn" onclick="showWidget('phone-wgt')"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="3"/></svg>Aperçu</button>
+  <button class="hdr-btn" onclick="showWidget('hooks-wgt')"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>Hooks</button>
+  <button class="hdr-btn" onclick="showWidget('auto-wgt')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Automatisation</button>
+  <a href="/results" class="hdr-btn" style="text-decoration:none"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Résultats</a>
+  <a href="/team" class="hdr-btn" style="text-decoration:none"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>Équipe</a>
+  <div class="hdr-right">
+    <div id="key-pill" class="pill pill-warn"><div class="pill-dot"></div><span>Clé manquante</span></div>
+    <!-- Download history button -->
+    <div style="position:relative" id="dl-history-btn">
+      <button class="hdr-btn" onclick="toggleDlDropdown()">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </button>
+      <div id="dl-badge">0</div>
+      <div id="dl-dropdown">
+        <div class="dl-dd-header">Téléchargements<button class="dl-dd-clear" onclick="clearDlHistory()">Effacer</button></div>
+        <div id="dl-list"><div style="padding:16px;text-align:center;font-size:11px;color:var(--muted)">Aucun téléchargement</div></div>
+      </div>
+    </div>
+    <button class="hdr-btn" onclick="openModal()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg></button>
+  </div>
+</header>
+
+<!-- Download tray -->
+<div id="dl-tray"></div>
+
+<div id="canvas" onmousedown="cvDown(event)" onmousemove="cvMove(event)" onmouseup="cvUp()" onwheel="cvWheel(event)">
+<div id="ci">
+
+<!-- VIDÉOS -->
+<div class="wgt" id="vid-wgt" style="left:20px;top:30px;width:270px;height:460px">
+  <div class="wgt-bar" onmousedown="startDrag(event,'vid-wgt')">
+    <div class="wgt-dots"><div class="wd x" onclick="hideWidget('vid-wgt')"></div><div class="wd"></div><div class="wd"></div></div>
+    <div class="wgt-title">Mes Vidéos</div><div class="wgt-spacer"></div>
+    <span style="font-size:10px;color:var(--muted)" id="vid-count"></span>
+  </div>
+  <div class="wgt-resize" onmousedown="startResize(event,'vid-wgt')"></div>
+  <div class="wgt-body">
+    <div class="drop-zone" id="dz-vid" ondragover="dzOver(event,'dz-vid')" ondragleave="dzLeave('dz-vid')" ondrop="dzDrop(event,'video')" onclick="document.getElementById('fi-vid').click()">
+      <div class="dz-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+      <p>Glisse tes vidéos ici<br/>ou <b>clique pour parcourir</b><br/>MP4 · MOV · AVI — plusieurs à la fois</p>
+    </div>
+    <input type="file" id="fi-vid" accept="video/*" multiple onchange="handleFiles(this.files,'video')">
+    <div class="thumb-grid" id="vid-grid"></div>
+  </div>
+</div>
+
+<!-- MÈMES -->
+<div class="wgt" id="meme-wgt" style="left:310px;top:30px;width:270px;height:460px">
+  <div class="wgt-bar" onmousedown="startDrag(event,'meme-wgt')">
+    <div class="wgt-dots"><div class="wd x" onclick="hideWidget('meme-wgt')"></div><div class="wd"></div><div class="wd"></div></div>
+    <div class="wgt-title">Mes Mèmes</div><div class="wgt-spacer"></div>
+    <span style="font-size:10px;color:var(--muted)" id="meme-count"></span>
+  </div>
+  <div class="wgt-resize" onmousedown="startResize(event,'meme-wgt')"></div>
+  <div class="wgt-body">
+    <div class="drop-zone" id="dz-meme" ondragover="dzOver(event,'dz-meme')" ondragleave="dzLeave('dz-meme')" ondrop="dzDrop(event,'meme')" onclick="document.getElementById('fi-meme').click()">
+      <div class="dz-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9" y2="9" stroke-linecap="round" stroke-width="2.5"/><line x1="15" y1="9" x2="15" y2="9" stroke-linecap="round" stroke-width="2.5"/></svg></div>
+      <p>Glisse tes mèmes ici<br/>ou <b>clique pour parcourir</b><br/>L'IA sélectionne le plus adapté</p>
+    </div>
+    <input type="file" id="fi-meme" accept="video/*" multiple onchange="handleFiles(this.files,'meme')">
+    <div class="thumb-grid" id="meme-grid"></div>
+  </div>
+</div>
+
+<!-- BUILDER -->
+<div class="wgt" id="build-wgt" style="left:600px;top:30px;width:260px;height:560px">
+  <div class="wgt-bar" onmousedown="startDrag(event,'build-wgt')">
+    <div class="wgt-dots"><div class="wd x" onclick="hideWidget('build-wgt')"></div><div class="wd"></div><div class="wd"></div></div>
+    <div class="wgt-title">Builder</div>
+  </div>
+  <div class="wgt-resize" onmousedown="startResize(event,'build-wgt')"></div>
+  <div class="wgt-body">
+    <div><div class="field-lbl">Vidéo</div><div class="sel-row" id="bp-vid"><span class="sel-empty">Clique sur une vidéo</span></div></div>
+    <div><div class="field-lbl">Mème <span style="color:var(--muted);font-weight:400;text-transform:none;font-size:9px">— IA auto si vide</span></div><div class="sel-row" id="bp-meme"><span class="sel-empty">Auto (IA)</span></div></div>
+    <div>
+      <div class="field-lbl">Affichage du mème</div>
+      <div class="radio-row">
+        <label class="radio-lbl" id="lbl-fill"><input type="radio" name="meme_mode" value="fill" checked onchange="updateMemeMode()"> Plein écran</label>
+        <label class="radio-lbl" id="lbl-fit"><input type="radio" name="meme_mode" value="fit" onchange="updateMemeMode()"> Format original</label>
+      </div>
+    </div>
+    <div>
+      <div class="field-lbl">Options</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div class="opt-row">
+          <span class="opt-label">Sans hook (texte overlay)</span>
+          <label class="toggle"><input type="checkbox" id="no-hook-toggle" onchange="updateHookVisibility()"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+        </div>
+        <div class="opt-row">
+          <span class="opt-label">Supprimer filigrane</span>
+          <label class="toggle"><input type="checkbox" id="wm-toggle"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+        </div>
+      </div>
+    </div>
+    <div id="hook-section">
+      <div class="field-lbl">Hook <span style="color:var(--muted);font-weight:400;text-transform:none;font-size:9px">— IA auto si vide</span></div>
+      <textarea class="hook-ta" id="hook-ta" rows="2" placeholder="Ex: ATTENDS LA FIN..." oninput="updateHook()"></textarea>
+      <button class="icon-btn" style="width:100%;margin-top:5px;font-size:11px" onclick="saveCurrentHook()">+ Sauvegarder dans la bibliothèque</button>
+    </div>
+    <button class="gen-btn" id="gen-btn" onclick="generate()" disabled>Générer la vidéo</button>
+    <div class="prog-wrap" id="prog-wrap" style="display:none">
+      <div class="prog-bar"><div class="prog-fill spin" id="prog-fill"></div></div>
+      <div class="prog-msg" id="prog-msg">En cours…</div>
+    </div>
+  </div>
+</div>
+
+<!-- PHONE / APERÇU -->
+<div class="wgt" id="phone-wgt" style="left:880px;top:30px;width:270px">
+  <div class="wgt-bar" onmousedown="startDrag(event,'phone-wgt')">
+    <div class="wgt-dots"><div class="wd x" onclick="hideWidget('phone-wgt')"></div><div class="wd"></div><div class="wd"></div></div>
+    <div class="wgt-title">Aperçu</div>
+    <div class="wgt-spacer"></div>
+    <button class="wgt-icon-btn" onclick="expandPhone()" title="Agrandir">
+      <svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+    </button>
+  </div>
+  <div class="wgt-resize" onmousedown="startResize(event,'phone-wgt')"></div>
+  <div class="wgt-body" style="align-items:center">
+    <div class="iphone">
+      <div class="di"></div>
+      <div class="iscreen" id="iscreen"><div class="iempty"><div class="iempty-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1.5"><rect x="5" y="2" width="14" height="20" rx="3"/><line x1="9" y1="7" x2="15" y2="7"/></svg></div><p>Sélectionne une vidéo</p></div></div>
+      <div class="ioverlay" id="ioverlay" style="display:none"><div class="ihook" id="ihook"></div></div>
+      <div class="iactions">
+        <div class="iact"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
+        <div class="iact"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+        <div class="iact"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></div>
+      </div>
+      <div class="ihome"></div>
+    </div>
+    <!-- Phone controls: mute -->
+    <div class="phone-ctrl-bar">
+      <button class="phone-ctrl-btn" id="mute-btn" onclick="toggleMute()">
+        <svg viewBox="0 0 24 24" id="mute-icon"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/></svg>
+        <span id="mute-lbl">Son activé</span>
+      </button>
+    </div>
+    <div class="tl-wrap" id="tl-wrap" style="display:none">
+      <div class="tl-lbl"><span>0s</span><span style="color:var(--amber);font-weight:700">coupe</span><span id="tl-end">—</span></div>
+      <div class="tl-track">
+        <div class="tl-a" id="tl-a"></div>
+        <div class="tl-b" id="tl-b" style="display:none"></div>
+        <div class="tl-cut" id="tl-cut"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BIBLIOTHÈQUE DE HOOKS -->
+<div class="wgt" id="hooks-wgt" style="left:20px;top:510px;width:560px;display:none">
+  <div class="wgt-bar" onmousedown="startDrag(event,'hooks-wgt')">
+    <div class="wgt-dots"><div class="wd x" onclick="hideWidget('hooks-wgt')"></div><div class="wd"></div><div class="wd"></div></div>
+    <div class="wgt-title">Hooks sauvegardés</div>
+  </div>
+  <div class="wgt-resize" onmousedown="startResize(event,'hooks-wgt')"></div>
+  <div class="wgt-body">
+    <div class="hook-add-row">
+      <input class="hook-add-inp" id="hook-new-inp" placeholder="Ex: POV TU REGARDES PAS JUSQU'AU BOUT" onkeydown="if(event.key==='Enter')addHook()">
+      <button class="icon-btn" onclick="addHook()">+ Ajouter</button>
+    </div>
+    <div class="hook-chips" id="hook-chips">
+      <span style="font-size:11px;color:var(--muted)">Aucun hook sauvegardé</span>
+    </div>
+  </div>
+</div>
+
+<!-- AUTOMATISATION -->
+<div class="wgt" id="auto-wgt" style="left:600px;top:610px;width:260px;display:none">
+  <div class="wgt-bar" onmousedown="startDrag(event,'auto-wgt')">
+    <div class="wgt-dots"><div class="wd x" onclick="hideWidget('auto-wgt')"></div><div class="wd"></div><div class="wd"></div></div>
+    <div class="wgt-title">Planning</div>
+  </div>
+  <div class="wgt-resize" onmousedown="startResize(event,'auto-wgt')"></div>
+  <div class="wgt-body">
+    <div class="auto-row">
+      <div class="auto-label">Activer le planning</div>
+      <label class="toggle"><input type="checkbox" id="auto-toggle" onchange="saveSchedule()"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+    </div>
+    <div>
+      <div class="field-lbl">Fréquence</div>
+      <select class="sel-inp" id="sched-freq" onchange="onFreqChange()">
+        <option value="weekly">Hebdomadaire</option>
+        <option value="daily">Quotidien</option>
+        <option value="weekdays">Jours de semaine (Lun-Ven)</option>
+      </select>
+    </div>
+    <div id="day-row">
+      <div class="field-lbl">Jour</div>
+      <select class="sel-inp" id="sched-day" onchange="saveSchedule()">
+        <option value="lundi">Lundi</option><option value="mardi">Mardi</option>
+        <option value="mercredi" selected>Mercredi</option><option value="jeudi">Jeudi</option>
+        <option value="vendredi">Vendredi</option><option value="samedi">Samedi</option>
+        <option value="dimanche">Dimanche</option>
+      </select>
+    </div>
+    <div>
+      <div class="field-lbl">Heure</div>
+      <input class="sel-inp" type="time" id="sched-time" value="09:00" onchange="saveSchedule()">
+    </div>
+    <div>
+      <div class="field-lbl">Hook automatique</div>
+      <select class="sel-inp" id="sched-hook-src" onchange="saveSchedule()">
+        <option value="ai">Généré par l'IA (recommandé)</option>
+        <option value="library">Pioché dans la bibliothèque</option>
+        <option value="fixed">Texte fixe</option>
+      </select>
+    </div>
+    <div>
+      <div class="field-lbl">Mode mème auto</div>
+      <select class="sel-inp" id="sched-meme-mode" onchange="saveSchedule()">
+        <option value="fill">Plein écran</option>
+        <option value="fit">Format original</option>
+      </select>
+    </div>
+    <div class="next-run" id="next-run" style="display:none"></div>
+    <div class="info-box">L'IA traitera automatiquement toutes les nouvelles vidéos du dossier <b>uploads/</b> selon ce planning.</div>
+  </div>
+</div>
+
+
+</div></div>
+
+<!-- MODAL API -->
+<div class="modal-bg h" id="modal-bg">
+  <div class="modal">
+    <h3>Clé API OpenAI</h3>
+    <p>Nécessaire pour générer les hooks et sélectionner les mèmes.<br/>Obtiens ta clé sur <b>platform.openai.com</b></p>
+    <input type="password" id="api-inp" placeholder="sk-proj-…">
+    <div class="modal-foot"><button class="btn-g" onclick="closeModal()">Annuler</button><button class="btn-s" onclick="saveKey()">Enregistrer</button></div>
+  </div>
+</div>
+<!-- EXPAND MODAL -->
+<div id="expand-modal" class="h">
+  <div style="position:relative">
+    <div class="expand-phone">
+      <div class="expand-di"></div>
+      <div id="expand-screen"><div class="iempty"><p style="color:rgba(255,255,255,.3);font-size:12px">Aucune vidéo</p></div></div>
+      <div class="expand-home"></div>
+    </div>
+    <button class="expand-close" onclick="closeExpand()">✕</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DRAG & RESIZE ─────────────────────────────────────────────────────────
+let drag=null,resz=null,camX=0,camY=0,camZ=1,cvDrag=null;
+
+function startDrag(e,id){
+  if(e.target.classList.contains('wd')||e.target.classList.contains('wgt-resize'))return;
+  e.stopPropagation();e.preventDefault();
+  const el=document.getElementById(id);
+  drag={el,sx:e.clientX,sy:e.clientY,ox:parseFloat(el.style.left)||0,oy:parseFloat(el.style.top)||0};
+  el.style.zIndex=99;
+}
+function startResize(e,id){
+  e.stopPropagation();e.preventDefault();
+  const el=document.getElementById(id);
+  resz={el,sx:e.clientX,sy:e.clientY,ow:el.offsetWidth,oh:el.offsetHeight};
+  el.style.zIndex=99;
+}
+function cvDown(e){
+  if(drag||resz)return;
+  if(e.target.id==='canvas'||e.target.id==='ci') cvDrag={sx:e.clientX,sy:e.clientY,cx:camX,cy:camY};
+}
+function cvMove(e){
+  if(drag){drag.el.style.left=(drag.ox+(e.clientX-drag.sx)/camZ)+'px';drag.el.style.top=(drag.oy+(e.clientY-drag.sy)/camZ)+'px';return;}
+  if(resz){
+    resz.el.style.width=Math.max(180,(resz.ow+(e.clientX-resz.sx)/camZ))+'px';
+    resz.el.style.height=Math.max(80,(resz.oh+(e.clientY-resz.sy)/camZ))+'px';
+    return;
+  }
+  if(cvDrag){camX=cvDrag.cx+(e.clientX-cvDrag.sx);camY=cvDrag.cy+(e.clientY-cvDrag.sy);applyCamera();}
+}
+function cvUp(){drag=null;resz=null;cvDrag=null;}
+function cvWheel(e){e.preventDefault();camZ=Math.max(.25,Math.min(3,camZ-e.deltaY*.001));applyCamera();}
+function applyCamera(){document.getElementById('ci').style.transform=`translate(${camX}px,${camY}px) scale(${camZ})`;}
+function showWidget(id){const el=document.getElementById(id);el.style.display='';el.style.zIndex=50;}
+function hideWidget(id){document.getElementById(id).style.display='none';}
+
+// ── DROP ZONES ────────────────────────────────────────────────────────────
+function dzOver(e,id){e.preventDefault();e.stopPropagation();document.getElementById(id).classList.add('over');}
+function dzLeave(id){document.getElementById(id).classList.remove('over');}
+function dzDrop(e,kind){e.preventDefault();e.stopPropagation();document.getElementById(kind==='video'?'dz-vid':'dz-meme').classList.remove('over');handleFiles(e.dataTransfer.files,kind);}
+
+async function handleFiles(files,kind){
+  const arr=Array.from(files).filter(f=>f.type.startsWith('video/')||/\.(mp4|mov|avi|mkv|webm)$/i.test(f.name));
+  if(!arr.length){toast('Aucun fichier vidéo détecté','err');return;}
+  toast(`Upload de ${arr.length} fichier(s)…`);
+  for(const f of arr){const fd=new FormData();fd.append('file',f);try{await fetch('/api/upload/'+kind,{method:'POST',body:fd});}catch(e){}}
+  toast(`${arr.length} fichier(s) ajouté(s) !`,'ok');
+  kind==='video'?loadVideos():loadMemes();
+  document.getElementById(kind==='video'?'fi-vid':'fi-meme').value='';
+}
+
+// ── MEDIA ─────────────────────────────────────────────────────────────────
+let selVid=null,selMeme=null;
+
+async function loadVideos(){
+  const items=await(await fetch('/api/files/videos')).json();
+  document.getElementById('vid-count').textContent=items.length+(items.length>1?' fichiers':' fichier');
+  const g=document.getElementById('vid-grid');g.innerHTML='';
+  items.forEach(v=>{
+    const d=document.createElement('div');d.className='tcard'+(selVid?.filename===v.filename?' sel':'');
+    d.innerHTML=`<img src="${v.thumbnail}" loading="lazy"><div class="tc-name">${v.filename}</div><div class="tc-check">✓</div><button class="tc-del" onclick="delFile(event,'videos','${v.filename}')">✕</button>`;
+    d.addEventListener('click',()=>selectVid(v,d));g.appendChild(d);
+  });
+}
+async function loadMemes(){
+  const items=await(await fetch('/api/files/memes')).json();
+  document.getElementById('meme-count').textContent=items.length+(items.length>1?' fichiers':' fichier');
+  const g=document.getElementById('meme-grid');g.innerHTML='';
+  items.forEach(m=>{
+    const d=document.createElement('div');d.className='tcard'+(selMeme?.filename===m.filename?' sel-meme':'');
+    d.innerHTML=`<img src="${m.thumbnail}" loading="lazy"><div class="tc-name">${m.filename}</div><div class="tc-check">✓</div><button class="tc-del" onclick="delFile(event,'memes','${m.filename}')">✕</button>`;
+    d.addEventListener('click',()=>selectMeme(m,d));g.appendChild(d);
+  });
+}
+function loadOutputs(){}
+async function delFile(e,kind,fn){e.stopPropagation();await fetch(`/api/delete/${kind}/${fn}`,{method:'DELETE'});kind==='videos'?loadVideos():kind==='memes'?loadMemes():loadOutputs();}
+
+// ── SELECT ────────────────────────────────────────────────────────────────
+function selectVid(v,card){
+  selVid=v;
+  document.querySelectorAll('#vid-grid .tcard').forEach(c=>c.classList.remove('sel'));card.classList.add('sel');
+  document.getElementById('bp-vid').innerHTML=`<img class="sel-thumb" src="${v.thumbnail}"><div class="sel-info"><div class="sel-name">${v.filename}</div><div class="sel-sub">${fmtDur(v.duration)}</div></div>`;
+  _phoneVideoSrc=`/api/video/uploads/${v.filename}`;
+  const vid=`<video src="${_phoneVideoSrc}" autoplay muted loop playsinline style="width:100%;height:100%;object-fit:cover"></video>`;
+  document.getElementById('iscreen').innerHTML=vid;
+  if(_isMuted){const ve=document.querySelector('#iscreen video');if(ve)ve.muted=true;}
+  document.getElementById('tl-wrap').style.display='';updateTimeline(v.duration,selMeme?.duration||0);
+  document.getElementById('gen-btn').disabled=false;updateHook();
+}
+function selectMeme(m,card){
+  if(selMeme?.filename===m.filename){selMeme=null;document.querySelectorAll('#meme-grid .tcard').forEach(c=>c.classList.remove('sel-meme'));document.getElementById('bp-meme').innerHTML='<span class="sel-empty">Auto (IA)</span>';}
+  else{selMeme=m;document.querySelectorAll('#meme-grid .tcard').forEach(c=>c.classList.remove('sel-meme'));card.classList.add('sel-meme');document.getElementById('bp-meme').innerHTML=`<img class="sel-thumb" src="${m.thumbnail}"><div class="sel-info"><div class="sel-name">${m.filename}</div><div class="sel-sub">${fmtDur(m.duration)}</div></div>`;}
+  if(selVid)updateTimeline(selVid.duration,selMeme?.duration||0);loadMemes();
+}
+
+// ── TIMELINE & PHONE ──────────────────────────────────────────────────────
+function updateTimeline(vd,md){
+  const cut=Math.min(6,vd),total=cut+(md||0);
+  document.getElementById('tl-cut').style.left=(vd>0?cut/vd*100:0)+'%';
+  document.getElementById('tl-a').style.width=(vd>0?cut/vd*100:0)+'%';
+  document.getElementById('tl-end').textContent=fmtDur(total);
+  const cutPct=vd>0?cut/vd*100:100;
+  const b=document.getElementById('tl-b');
+  if(md){b.style.display='';b.style.left=cutPct+'%';b.style.width=((md/total)*(100-cutPct))+'%';}
+  else b.style.display='none';
+}
+function updateHook(){
+  const v=document.getElementById('hook-ta').value.trim();
+  const noHook=document.getElementById('no-hook-toggle').checked;
+  const ov=document.getElementById('ioverlay');
+  if(v&&selVid&&!noHook){document.getElementById('ihook').textContent=v;ov.style.display='';}else ov.style.display='none';
+}
+function updateHookVisibility(){
+  const noHook=document.getElementById('no-hook-toggle').checked;
+  document.getElementById('hook-section').style.opacity=noHook?'0.35':'1';
+  document.getElementById('hook-section').style.pointerEvents=noHook?'none':'';
+  updateHook();
+}
+
+// ── PHONE EXPAND ──────────────────────────────────────────────────────────
+let _phoneVideoSrc=null;
+function expandPhone(){
+  const modal=document.getElementById('expand-modal');
+  const scr=document.getElementById('expand-screen');
+  if(_phoneVideoSrc){
+    scr.innerHTML=`<video src="${_phoneVideoSrc}" autoplay loop playsinline style="width:100%;height:100%;object-fit:cover" id="expand-vid"></video>`;
+    const v=document.getElementById('expand-vid');
+    if(document.getElementById('mute-btn').classList.contains('active')) v.muted=true;
+  }
+  modal.classList.remove('h');
+}
+function closeExpand(){
+  document.getElementById('expand-modal').classList.add('h');
+  const v=document.getElementById('expand-vid');
+  if(v) v.pause();
+  document.getElementById('expand-screen').innerHTML='';
+}
+document.getElementById('expand-modal').addEventListener('click',function(e){if(e.target===this)closeExpand();});
+
+// ── MUTE TOGGLE ───────────────────────────────────────────────────────────
+let _isMuted=false;
+function toggleMute(){
+  _isMuted=!_isMuted;
+  const btn=document.getElementById('mute-btn');
+  const lbl=document.getElementById('mute-lbl');
+  const ico=document.getElementById('mute-icon');
+  if(_isMuted){
+    btn.classList.add('active');lbl.textContent='Son coupé';
+    ico.innerHTML='<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>';
+  } else {
+    btn.classList.remove('active');lbl.textContent='Son activé';
+    ico.innerHTML='<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/>';
+  }
+  const vid=document.querySelector('#iscreen video');
+  if(vid) vid.muted=_isMuted;
+}
+function previewOutput(fn){
+  _phoneVideoSrc=`/api/video/outputs/${fn}`;
+  document.getElementById('iscreen').innerHTML=`<video src="${_phoneVideoSrc}" autoplay controls loop playsinline style="width:100%;height:100%;object-fit:cover"></video>`;
+  if(_isMuted){const ve=document.querySelector('#iscreen video');if(ve)ve.muted=true;}
+  showWidget('phone-wgt');
+}
+function updateMemeMode(){
+  const fill=document.querySelector('input[name="meme_mode"][value="fill"]').checked;
+  document.getElementById('lbl-fill').style.borderColor=fill?'rgba(255,255,255,.4)':'var(--border)';
+  document.getElementById('lbl-fit').style.borderColor=!fill?'rgba(255,255,255,.4)':'var(--border)';
+}
+function getMemeMode(){return document.querySelector('input[name="meme_mode"]:checked')?.value||'fill';}
+
+// ── HOOK LIBRARY ──────────────────────────────────────────────────────────
+async function loadHooks(){
+  const hooks=await(await fetch('/api/hooks')).json();
+  const el=document.getElementById('hook-chips');
+  if(!hooks.length){el.innerHTML='<span style="font-size:11px;color:var(--muted)">Aucun hook sauvegardé — ajoutes-en ci-dessus</span>';return;}
+  el.innerHTML='';
+  hooks.forEach(h=>{
+    const chip=document.createElement('div');chip.className='hchip';
+    chip.innerHTML=`<span class="hchip-txt">${h.text}</span><button class="hchip-del" onclick="deleteHook(event,'${h.id}')">✕</button>`;
+    chip.addEventListener('click',e=>{if(e.target.classList.contains('hchip-del'))return;useHook(h.text);});
+    el.appendChild(chip);
+  });
+}
+async function addHook(){
+  const inp=document.getElementById('hook-new-inp');
+  const text=inp.value.trim();if(!text)return;
+  await fetch('/api/hooks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+  inp.value='';loadHooks();toast('Hook sauvegardé !','ok');
+}
+async function deleteHook(e,id){e.stopPropagation();await fetch('/api/hooks/'+id,{method:'DELETE'});loadHooks();}
+function useHook(text){
+  document.getElementById('hook-ta').value=text;updateHook();
+  showWidget('build-wgt');toast('Hook appliqué ✓','ok');
+}
+async function saveCurrentHook(){
+  const text=document.getElementById('hook-ta').value.trim();
+  if(!text){toast('Écris d\'abord un hook','err');return;}
+  await fetch('/api/hooks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+  loadHooks();toast('Sauvegardé dans la bibliothèque !','ok');
+  showWidget('hooks-wgt');
+}
+
+// ── DOWNLOAD (Chrome-style) ───────────────────────────────────────────────
+let dlHistory=[];
+function downloadVideo(fn){
+  showDlNotif(fn,'Téléchargement…',false);
+  fetch('/api/download/'+fn).then(r=>r.blob()).then(blob=>{
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=fn;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+    updateDlNotif(fn);
+    dlHistory.unshift({fn,time:new Date().toLocaleTimeString()});
+    updateDlBadge();updateDlList();
+  }).catch(e=>toast('Erreur téléchargement','err'));
+}
+function showDlNotif(fn,status,done){
+  const tray=document.getElementById('dl-tray');
+  const id='dlnotif-'+fn.replace(/[^a-z0-9]/gi,'_');
+  let el=document.getElementById(id);
+  if(!el){
+    el=document.createElement('div');el.className='dl-notif';el.id=id;
+    el.innerHTML=`<div class="dl-notif-ico">⬇</div><div style="flex:1;min-width:0"><div class="dl-notif-name">${fn}</div><div class="dl-notif-status" id="${id}-st">${status}</div></div><button class="dl-close" onclick="this.parentElement.remove()">✕</button>`;
+    tray.appendChild(el);
+  }
+  if(done) setTimeout(()=>el?.remove(),5000);
+}
+function updateDlNotif(fn){
+  const id='dlnotif-'+fn.replace(/[^a-z0-9]/gi,'_');
+  const st=document.getElementById(id+'-st');
+  if(st){st.textContent='✓ Téléchargé';st.style.color='var(--green)';}
+  const el=document.getElementById(id);
+  if(el) setTimeout(()=>el?.remove(),3000);
+}
+function updateDlBadge(){
+  const badge=document.getElementById('dl-badge');
+  badge.textContent=dlHistory.length;badge.style.display=dlHistory.length?'flex':'none';
+}
+function updateDlList(){
+  const el=document.getElementById('dl-list');
+  if(!dlHistory.length){el.innerHTML='<div style="padding:16px;text-align:center;font-size:11px;color:var(--muted)">Aucun téléchargement</div>';return;}
+  el.innerHTML=dlHistory.map(d=>`<div class="dl-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;opacity:.5"><rect x="2" y="3" width="20" height="14" rx="2"/></svg><span class="dl-item-name">${d.fn}</span><span style="font-size:10px;color:var(--muted)">${d.time}</span><button class="dl-item-dl" onclick="downloadVideo('${d.fn}')">DL</button></div>`).join('');
+}
+function toggleDlDropdown(){document.getElementById('dl-dropdown').classList.toggle('open');}
+function clearDlHistory(){dlHistory=[];updateDlBadge();updateDlList();document.getElementById('dl-dropdown').classList.remove('open');}
+document.addEventListener('click',e=>{if(!document.getElementById('dl-history-btn').contains(e.target))document.getElementById('dl-dropdown').classList.remove('open');});
+
+// ── GENERATE ──────────────────────────────────────────────────────────────
+let pollTimer=null,_generating=false;
+async function generate(){
+  if(!selVid||_generating)return;
+  _generating=true;
+  document.getElementById('gen-btn').disabled=true;
+  document.getElementById('prog-wrap').style.display='';
+  document.getElementById('prog-fill').className='prog-fill spin';
+  document.getElementById('prog-msg').textContent='Démarrage…';
+  try{
+    const r=await fetch('/api/process',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({videos:[selVid.filename],meme:selMeme?.filename||null,hook:document.getElementById('hook-ta').value.trim(),meme_mode:getMemeMode(),no_hook:document.getElementById('no-hook-toggle').checked,remove_watermark:document.getElementById('wm-toggle').checked})});
+    const d=await r.json();
+    if(d.error){onErr(d.error);return;}
+    pollTimer=setInterval(()=>poll(d.job_id),900);
+  }catch(e){onErr(e.toString());}
+}
+async function poll(jid){
+  const d=await(await fetch('/api/job/'+jid)).json();
+  document.getElementById('prog-msg').textContent=d.message||'…';
+  if(d.status==='done'){clearInterval(pollTimer);onDone(d);}
+  if(d.status==='error'){clearInterval(pollTimer);onErr(d.message);}
+}
+function onDone(d){
+  _generating=false;document.getElementById('gen-btn').disabled=false;
+  document.getElementById('prog-fill').className='prog-fill';document.getElementById('prog-fill').style.width='100%';
+  toast('Vidéo générée ! → <a href="/results" style="color:#3b82f6;text-decoration:underline">Voir les résultats</a>','ok');
+  if(d.outputs&&d.outputs[0]){previewOutput(d.outputs[0].filename);if(d.outputs[0].hook){document.getElementById('ihook').textContent=d.outputs[0].hook;document.getElementById('ioverlay').style.display='';}}
+}
+function onErr(msg){_generating=false;document.getElementById('gen-btn').disabled=false;document.getElementById('prog-msg').textContent='❌ '+msg;toast(msg,'err');}
+
+// ── PLANNING ──────────────────────────────────────────────────────────────
+async function loadSchedule(){
+  const d=await(await fetch('/api/schedule')).json();
+  document.getElementById('auto-toggle').checked=d.enabled||false;
+  document.getElementById('sched-freq').value=d.freq||'weekly';
+  document.getElementById('sched-day').value=d.day||'mercredi';
+  const t=String(d.hour||9).padStart(2,'0')+':'+String(d.minute||0).padStart(2,'0');
+  document.getElementById('sched-time').value=t;
+  document.getElementById('sched-hook-src').value=d.hook_src||'ai';
+  document.getElementById('sched-meme-mode').value=d.meme_mode||'fill';
+  onFreqChange();updateNextRun(d);
+}
+function onFreqChange(){document.getElementById('day-row').style.display=document.getElementById('sched-freq').value==='weekly'?'':'none';saveSchedule();}
+async function saveSchedule(){
+  const time=document.getElementById('sched-time').value.split(':');
+  const cfg={enabled:document.getElementById('auto-toggle').checked,freq:document.getElementById('sched-freq').value,day:document.getElementById('sched-day').value,hour:parseInt(time[0]),minute:parseInt(time[1]||0),hook_src:document.getElementById('sched-hook-src').value,meme_mode:document.getElementById('sched-meme-mode').value};
+  await fetch('/api/schedule',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfg)});
+  updateNextRun(cfg);
+}
+function updateNextRun(cfg){
+  const el=document.getElementById('next-run');
+  if(!cfg.enabled){el.style.display='none';return;}
+  const DAYS={'lundi':'Lundi','mardi':'Mardi','mercredi':'Mercredi','jeudi':'Jeudi','vendredi':'Vendredi','samedi':'Samedi','dimanche':'Dimanche'};
+  const freq={'weekly':'Chaque '+DAYS[cfg.day],'daily':'Chaque jour','weekdays':'Lun-Ven'};
+  el.style.display='';el.textContent='⏰ '+(freq[cfg.freq||'weekly']||'')+' à '+String(cfg.hour||9).padStart(2,'0')+'h'+String(cfg.minute||0).padStart(2,'0');
+}
+
+// ── API KEY ───────────────────────────────────────────────────────────────
+function openModal(){document.getElementById('modal-bg').classList.remove('h');}
+function closeModal(){document.getElementById('modal-bg').classList.add('h');}
+async function saveKey(){
+  const key=document.getElementById('api-inp').value.trim();if(!key)return;
+  const d=await(await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:key})})).json();
+  if(d.ok){closeModal();checkKey();toast('Clé enregistrée ✓','ok');}
+}
+async function checkKey(){
+  const d=await(await fetch('/api/settings')).json();
+  const p=document.getElementById('key-pill');
+  p.className=d.has_key?'pill pill-ok':'pill pill-warn';
+  p.innerHTML=`<div class="pill-dot"></div><span>${d.has_key?'API active':'Clé manquante'}</span>`;
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────────
+function fmtDur(s){if(!s)return'?';return`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;}
+let _tt;
+function toast(msg,type=''){
+  const el=document.getElementById('toast');el.textContent=msg;
+  el.style.borderColor=type==='ok'?'rgba(34,197,94,.35)':type==='err'?'rgba(239,68,68,.35)':'var(--border2)';
+  el.style.color=type==='ok'?'var(--green)':type==='err'?'var(--red)':'var(--text)';
+  el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),2800);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+checkKey();loadVideos();loadMemes();loadOutputs();loadHooks();loadSchedule();updateMemeMode();
+</script>
+</body>
+</html>

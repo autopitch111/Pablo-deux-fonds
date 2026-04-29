@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suivi Ventes 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --green-900: #1b4332;
+    --green-800: #2d6a4f;
+    --green-700: #40916c;
+    --green-500: #52b788;
+    --green-400: #74c69d;
+    --green-200: #b7e4c7;
+    --green-100: #d8f3dc;
+    --green-50:  #f0fdf4;
+    --white: #ffffff;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-300: #d1d5db;
+    --gray-500: #6b7280;
+    --gray-700: #374151;
+    --gray-900: #111827;
+    --shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+    --shadow-lg: 0 4px 6px rgba(0,0,0,.07), 0 10px 40px rgba(0,0,0,.1);
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--green-50); color: var(--gray-900); min-height: 100vh; }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, var(--green-900) 0%, var(--green-700) 100%);
+    color: white; padding: 0 28px;
+    display: flex; align-items: center; gap: 16px; height: 64px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.2);
+  }
+  header .logo { font-size: 22px; }
+  header h1 { font-size: 18px; font-weight: 700; letter-spacing: -.3px; }
+  header .subtitle { font-size: 12px; opacity: .75; margin-top: 1px; }
+  header .spacer { flex: 1; }
+  header .date-badge {
+    background: rgba(255,255,255,.15); border-radius: 20px;
+    padding: 4px 14px; font-size: 13px; font-weight: 500;
+  }
+
+  /* NAV TABS */
+  nav {
+    background: var(--white); border-bottom: 1px solid var(--green-100);
+    display: flex; padding: 0 28px; gap: 4px;
+    box-shadow: 0 1px 0 var(--green-100);
+  }
+  nav button {
+    background: none; border: none; cursor: pointer;
+    padding: 14px 20px; font-size: 14px; font-weight: 500;
+    color: var(--gray-500); border-bottom: 3px solid transparent;
+    margin-bottom: -1px; transition: all .2s; display: flex; align-items: center; gap: 7px;
+  }
+  nav button:hover { color: var(--green-700); }
+  nav button.active { color: var(--green-800); border-bottom-color: var(--green-600, var(--green-700)); font-weight: 600; }
+
+  /* MAIN CONTENT */
+  main { padding: 28px; max-width: 1400px; margin: 0 auto; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--white); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 20px;
+  }
+  .card-title {
+    font-size: 13px; font-weight: 600; color: var(--gray-500);
+    text-transform: uppercase; letter-spacing: .6px; margin-bottom: 12px;
+  }
+
+  /* KPI GRID */
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+  .kpi-card {
+    background: var(--white); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 20px 22px;
+    display: flex; align-items: flex-start; gap: 14px;
+  }
+  .kpi-icon {
+    width: 44px; height: 44px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .kpi-icon.g1 { background: var(--green-100); }
+  .kpi-icon.g2 { background: #dcfce7; }
+  .kpi-icon.g3 { background: #fef9c3; }
+  .kpi-icon.g4 { background: #fee2e2; }
+  .kpi-label { font-size: 12px; color: var(--gray-500); font-weight: 500; margin-bottom: 4px; }
+  .kpi-value { font-size: 26px; font-weight: 700; color: var(--gray-900); line-height: 1; }
+  .kpi-sub { font-size: 12px; color: var(--green-700); margin-top: 4px; font-weight: 500; }
+
+  /* CHARTS GRID */
+  .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .charts-row2 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  canvas { max-height: 260px; }
+
+  /* TOP PRODUCTS TABLE */
+  .top-table { width: 100%; border-collapse: collapse; }
+  .top-table th { font-size: 11px; color: var(--gray-500); text-transform: uppercase; letter-spacing: .5px; padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--gray-100); }
+  .top-table td { padding: 9px 10px; font-size: 13px; border-bottom: 1px solid var(--gray-100); }
+  .top-table tr:last-child td { border-bottom: none; }
+  .top-table tr:hover td { background: var(--green-50); }
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+  }
+  .badge-legumes { background: #dcfce7; color: #166534; }
+  .badge-plants { background: #d1fae5; color: #065f46; }
+  .badge-aromatiques { background: #f0fdf4; color: #14532d; }
+  .badge-fraisiers { background: #ffe4e6; color: #9f1239; }
+  .badge-fleurs { background: #fdf4ff; color: #7e22ce; }
+  .badge-biocoop { background: #eff6ff; color: #1e40af; }
+  .badge-autre { background: #f3f4f6; color: #374151; }
+
+  /* PROGRESS BAR */
+  .progress-bar { height: 6px; background: var(--green-100); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+  .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--green-500), var(--green-700)); border-radius: 3px; transition: width .5s; }
+
+  /* ===== CAISSE ===== */
+  .caisse-grid { display: grid; grid-template-columns: 1fr 380px; gap: 20px; align-items: start; }
+  .catalog-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .catalog-header h2 { font-size: 16px; font-weight: 700; }
+  .cat-filter { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .cat-btn {
+    padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--green-200);
+    background: white; color: var(--green-800); font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all .15s;
+  }
+  .cat-btn:hover, .cat-btn.active { background: var(--green-800); color: white; border-color: var(--green-800); }
+  .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+  .product-btn {
+    background: white; border: 1.5px solid var(--green-100);
+    border-radius: var(--radius-sm); padding: 12px 10px;
+    cursor: pointer; text-align: center; transition: all .15s;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+  }
+  .product-btn:hover { border-color: var(--green-500); box-shadow: 0 2px 8px rgba(82,183,136,.2); transform: translateY(-1px); }
+  .product-btn .p-emoji { font-size: 24px; }
+  .product-btn .p-name { font-size: 11px; font-weight: 600; color: var(--gray-700); line-height: 1.3; }
+  .product-btn .p-cat { font-size: 10px; color: var(--gray-500); }
+
+  /* TICKET */
+  .ticket { background: white; border-radius: var(--radius); box-shadow: var(--shadow-lg); overflow: hidden; position: sticky; top: 20px; }
+  .ticket-header { background: linear-gradient(135deg, var(--green-900), var(--green-700)); color: white; padding: 16px 20px; }
+  .ticket-header h3 { font-size: 15px; font-weight: 700; }
+  .ticket-header .ticket-date { font-size: 12px; opacity: .8; margin-top: 2px; }
+  .ticket-body { padding: 16px; min-height: 180px; }
+  .ticket-empty { text-align: center; color: var(--gray-300); padding: 40px 20px; font-size: 14px; }
+  .ticket-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px dashed var(--gray-100); }
+  .ticket-item-name { flex: 1; font-size: 13px; font-weight: 500; }
+  .ticket-item-qty { font-size: 12px; color: var(--gray-500); }
+  .ticket-item-price { font-size: 13px; font-weight: 700; color: var(--green-800); min-width: 52px; text-align: right; }
+  .ticket-item-del { background: none; border: none; cursor: pointer; color: var(--gray-300); font-size: 16px; padding: 2px; transition: color .15s; }
+  .ticket-item-del:hover { color: #ef4444; }
+  .ticket-footer { border-top: 2px solid var(--green-100); padding: 16px; }
+  .ticket-total { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .ticket-total-label { font-size: 14px; font-weight: 600; color: var(--gray-700); }
+  .ticket-total-value { font-size: 24px; font-weight: 800; color: var(--green-800); }
+  .form-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  .form-group { flex: 1; }
+  label { display: block; font-size: 11px; font-weight: 600; color: var(--gray-500); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .4px; }
+  input, select {
+    width: 100%; padding: 8px 10px; border: 1.5px solid var(--gray-300);
+    border-radius: 8px; font-size: 13px; outline: none; transition: border-color .15s;
+    background: white; color: var(--gray-900);
+  }
+  input:focus, select:focus { border-color: var(--green-500); }
+  .btn-primary {
+    width: 100%; padding: 13px; background: linear-gradient(135deg, var(--green-700), var(--green-800));
+    color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(45,106,79,.4); }
+  .btn-primary:active { transform: none; }
+  .btn-secondary {
+    width: 100%; padding: 9px; background: white; color: var(--green-800);
+    border: 1.5px solid var(--green-200); border-radius: 10px; font-size: 13px; font-weight: 600;
+    cursor: pointer; margin-top: 8px; transition: all .15s;
+  }
+  .btn-secondary:hover { background: var(--green-50); }
+
+  /* MODAL */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,.4); backdrop-filter: blur(3px);
+    display: flex; align-items: center; justify-content: center; z-index: 100;
+    opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  .modal-backdrop.show { opacity: 1; pointer-events: all; }
+  .modal {
+    background: white; border-radius: var(--radius); padding: 28px;
+    width: 380px; max-width: 95vw; box-shadow: var(--shadow-lg);
+    transform: scale(.96); transition: transform .2s;
+  }
+  .modal-backdrop.show .modal { transform: scale(1); }
+  .modal h3 { font-size: 17px; font-weight: 700; margin-bottom: 18px; color: var(--green-900); }
+  .modal .form-group { margin-bottom: 12px; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+  .modal-actions button { flex: 1; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; }
+  .btn-confirm { background: var(--green-700); color: white; }
+  .btn-cancel { background: var(--gray-100); color: var(--gray-700); }
+
+  /* ===== HISTORIQUE ===== */
+  .filters { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: flex-end; }
+  .filters .form-group { flex: 1; min-width: 140px; }
+  .filter-reset { background: none; border: 1.5px solid var(--gray-300); border-radius: 8px; padding: 8px 14px; color: var(--gray-500); cursor: pointer; font-size: 13px; font-weight: 500; transition: all .15s; }
+  .filter-reset:hover { border-color: var(--green-500); color: var(--green-700); }
+  .table-wrap { overflow-x: auto; }
+  table.hist { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.hist th { background: var(--green-50); padding: 11px 14px; text-align: left; font-size: 11px; color: var(--gray-500); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; border-bottom: 2px solid var(--green-100); }
+  table.hist td { padding: 11px 14px; border-bottom: 1px solid var(--gray-100); }
+  table.hist tr:hover td { background: var(--green-50); }
+  table.hist tr:last-child td { border-bottom: none; }
+  .hist-total-row td { font-weight: 700; background: var(--green-50); border-top: 2px solid var(--green-200); }
+  .delete-btn { background: none; border: none; cursor: pointer; color: var(--gray-300); font-size: 15px; padding: 2px 6px; border-radius: 4px; transition: all .15s; }
+  .delete-btn:hover { color: #ef4444; background: #fee2e2; }
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--gray-400); }
+  .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 28px; right: 28px; background: var(--green-800);
+    color: white; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 500;
+    box-shadow: var(--shadow-lg); transform: translateY(80px); opacity: 0;
+    transition: all .3s; z-index: 200;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  @media (max-width: 900px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-row { grid-template-columns: 1fr; }
+    .charts-row2 { grid-template-columns: 1fr; }
+    .caisse-grid { grid-template-columns: 1fr; }
+    main { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo">🌿</span>
+  <div>
+    <h1>Suivi Ventes 2026</h1>
+    <div class="subtitle">Jardin & Maraîchage</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="date-badge" id="headerDate"></div>
+</header>
+
+<nav>
+  <button class="active" onclick="switchTab('dashboard', this)">📊 Dashboard</button>
+  <button onclick="switchTab('caisse', this)">🛒 Caisse</button>
+  <button onclick="switchTab('historique', this)">📋 Historique</button>
+</nav>
+
+<main>
+
+<!-- ===== DASHBOARD ===== -->
+<div id="tab-dashboard" class="tab-content active">
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon g1">💶</div>
+      <div>
+        <div class="kpi-label">CA Total 2026</div>
+        <div class="kpi-value" id="kpi-total">—</div>
+        <div class="kpi-sub" id="kpi-total-sub"></div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon g2">📅</div>
+      <div>
+        <div class="kpi-label">Mois en cours</div>
+        <div class="kpi-value" id="kpi-month">—</div>
+        <div class="kpi-sub" id="kpi-month-sub"></div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon g3">🧾</div>
+      <div>
+        <div class="kpi-label">Nb de ventes</div>
+        <div class="kpi-value" id="kpi-count">—</div>
+        <div class="kpi-sub" id="kpi-count-sub"></div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon g4">🏪</div>
+      <div>
+        <div class="kpi-label">CA Biocoop</div>
+        <div class="kpi-value" id="kpi-biocoop">—</div>
+        <div class="kpi-sub" id="kpi-biocoop-sub"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="charts-row">
+    <div class="card">
+      <div class="card-title">Chiffre d'affaires par mois</div>
+      <canvas id="chartMonths"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">Répartition par catégorie</div>
+      <canvas id="chartCats"></canvas>
+    </div>
+  </div>
+
+  <div class="charts-row2">
+    <div class="card">
+      <div class="card-title">Top produits</div>
+      <table class="top-table" id="topProductsTable"></table>
+    </div>
+    <div class="card">
+      <div class="card-title">Moyens de paiement</div>
+      <canvas id="chartPaiement"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">Canaux de vente</div>
+      <div id="canalStats"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CAISSE ===== -->
+<div id="tab-caisse" class="tab-content">
+  <div class="caisse-grid">
+    <div>
+      <div class="catalog-header">
+        <h2>Catalogue produits</h2>
+        <button class="cat-btn" style="border-color:var(--green-700);color:var(--green-700)" onclick="openNewProductModal()">+ Nouveau produit</button>
+      </div>
+      <div class="cat-filter" id="catFilter"></div>
+      <div class="products-grid" id="productsGrid"></div>
+    </div>
+
+    <div>
+      <div class="ticket">
+        <div class="ticket-header">
+          <h3>🧾 Ticket en cours</h3>
+          <div class="ticket-date" id="ticketDateDisplay"></div>
+        </div>
+        <div class="ticket-body" id="ticketBody">
+          <div class="ticket-empty">Sélectionnez des produits<br>dans le catalogue</div>
+        </div>
+        <div class="ticket-footer">
+          <div class="ticket-total">
+            <span class="ticket-total-label">Total</span>
+            <span class="ticket-total-value" id="ticketTotal">0,00 €</span>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Date de vente</label>
+              <input type="date" id="saleDate">
+            </div>
+            <div class="form-group">
+              <label>Paiement</label>
+              <select id="salePaiement">
+                <option>Monnaie</option>
+                <option>CB</option>
+                <option>Virement</option>
+                <option>Chèques</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>Canal</label>
+            <select id="saleCanal">
+              <option>Vente directe</option>
+              <option>Biocoop</option>
+              <option>Marché</option>
+            </select>
+          </div>
+          <button class="btn-primary" onclick="validateSale()">✅ Valider la vente</button>
+          <button class="btn-secondary" onclick="clearCart()">🗑 Vider le ticket</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== HISTORIQUE ===== -->
+<div id="tab-historique" class="tab-content">
+  <div class="card" style="margin-bottom:20px">
+    <div class="filters">
+      <div class="form-group">
+        <label>Mois</label>
+        <select id="filterMonth" onchange="renderHistory()">
+          <option value="">Tous les mois</option>
+          <option value="01">Janvier</option>
+          <option value="02">Février</option>
+          <option value="03">Mars</option>
+          <option value="04">Avril</option>
+          <option value="05">Mai</option>
+          <option value="06">Juin</option>
+          <option value="07">Juillet</option>
+          <option value="08">Août</option>
+          <option value="09">Septembre</option>
+          <option value="10">Octobre</option>
+          <option value="11">Novembre</option>
+          <option value="12">Décembre</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Catégorie</label>
+        <select id="filterCat" onchange="renderHistory()">
+          <option value="">Toutes</option>
+          <option>Légumes</option>
+          <option>Plants maraîchers</option>
+          <option>Aromatiques</option>
+          <option>Fraisiers</option>
+          <option>Fleurs</option>
+          <option>Autre</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Canal</label>
+        <select id="filterCanal" onchange="renderHistory()">
+          <option value="">Tous</option>
+          <option>Vente directe</option>
+          <option>Biocoop</option>
+          <option>Marché</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Produit</label>
+        <input type="text" id="filterSearch" placeholder="Rechercher…" oninput="renderHistory()">
+      </div>
+      <button class="filter-reset" onclick="resetFilters()">↺ Réinitialiser</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="table-wrap">
+      <table class="hist">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Produit</th>
+            <th>Catégorie</th>
+            <th>Poids / Qté</th>
+            <th>Montant</th>
+            <th>Paiement</th>
+            <th>Canal</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="histBody"></tbody>
+        <tfoot id="histFoot"></tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- MODAL: Ajouter produit au ticket -->
+<div class="modal-backdrop" id="modalProduct">
+  <div class="modal">
+    <h3 id="modalProductTitle">Ajouter au ticket</h3>
+    <div class="form-group">
+      <label>Quantité (unités)</label>
+      <input type="number" id="modalQte" min="0" step="1" placeholder="ex: 3">
+    </div>
+    <div class="form-group">
+      <label>Poids (kg) — si vendu au poids</label>
+      <input type="number" id="modalPoids" min="0" step="0.01" placeholder="ex: 0.75">
+    </div>
+    <div class="form-group">
+      <label>Prix (€)</label>
+      <input type="number" id="modalPrix" min="0" step="0.01" placeholder="ex: 2.50">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('modalProduct')">Annuler</button>
+      <button class="btn-confirm" onclick="confirmAddToCart()">Ajouter ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Nouveau produit -->
+<div class="modal-backdrop" id="modalNewProduct">
+  <div class="modal">
+    <h3>Nouveau produit</h3>
+    <div class="form-group">
+      <label>Nom du produit</label>
+      <input type="text" id="newProdName" placeholder="ex: Courgette jaune">
+    </div>
+    <div class="form-group">
+      <label>Catégorie</label>
+      <select id="newProdCat">
+        <option>Légumes</option>
+        <option>Plants maraîchers</option>
+        <option>Aromatiques</option>
+        <option>Fraisiers</option>
+        <option>Fleurs</option>
+        <option>Autre</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Prix habituel (€)</label>
+      <input type="number" id="newProdPrix" min="0" step="0.01" placeholder="ex: 1.50">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('modalNewProduct')">Annuler</button>
+      <button class="btn-confirm" onclick="confirmNewProduct()">Créer ✓</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===================== DATA =====================
+const INITIAL_SALES = [
+  // ---- JANVIER Vente directe ----
+  {id:1,date:"2026-01-15",produit:"Butternut",cat:"Légumes",poids:0.73,qte:null,prix:2.35,paiement:"Monnaie",canal:"Vente directe"},
+  {id:2,date:"2026-01-21",produit:"Courge musquée",cat:"Légumes",poids:0.94,qte:null,prix:3,paiement:"Monnaie",canal:"Vente directe"},
+  {id:3,date:"2026-01-21",produit:"Courge musquée",cat:"Légumes",poids:0.86,qte:null,prix:2.75,paiement:"Monnaie",canal:"Vente directe"},
+  {id:4,date:"2026-01-24",produit:"Courge musquée",cat:"Légumes",poids:1.375,qte:null,prix:4.4,paiement:"Monnaie",canal:"Vente directe"},
+  {id:5,date:"2026-01-31",produit:"Courge musquée",cat:"Légumes",poids:1,qte:null,prix:3.2,paiement:"Virement",canal:"Vente directe"},
+  {id:6,date:"2026-01-31",produit:"Courge musquée",cat:"Légumes",poids:1,qte:null,prix:3.2,paiement:"Monnaie",canal:"Vente directe"},
+  // ---- JANVIER Biocoop ----
+  {id:7,date:"2026-01-30",produit:"Roquette",cat:"Légumes",poids:1.7,qte:null,prix:16.14,paiement:"Virement",canal:"Biocoop"},
+  // ---- FÉVRIER Vente directe ----
+  {id:8,date:"2026-02-01",produit:"Courge musquée",cat:"Légumes",poids:0.97,qte:null,prix:3.1,paiement:"Monnaie",canal:"Vente directe"},
+  {id:9,date:"2026-02-11",produit:"Butternut",cat:"Légumes",poids:0.75,qte:null,prix:2.4,paiement:"Monnaie",canal:"Vente directe"},
+  {id:10,date:"2026-02-18",produit:"Courge musquée",cat:"Légumes",poids:1.1,qte:null,prix:3.5,paiement:"Monnaie",canal:"Vente directe"},
+  // ---- FÉVRIER Biocoop ----
+  {id:11,date:"2026-02-28",produit:"Roquette + Aillet botte",cat:"Légumes",poids:null,qte:null,prix:35.13,paiement:"Virement",canal:"Biocoop"},
+  // ---- MARS Vente directe ----
+  {id:12,date:"2026-03-07",produit:"Aillet",cat:"Légumes",poids:null,qte:2,prix:5,paiement:"Monnaie",canal:"Vente directe"},
+  {id:13,date:"2026-03-07",produit:"Aillet",cat:"Légumes",poids:null,qte:2,prix:5,paiement:"Virement",canal:"Vente directe"},
+  {id:14,date:"2026-03-07",produit:"Aillet",cat:"Légumes",poids:null,qte:1,prix:2.5,paiement:"Monnaie",canal:"Vente directe"},
+  {id:15,date:"2026-03-07",produit:"Aillet",cat:"Légumes",poids:null,qte:0.5,prix:1,paiement:"Monnaie",canal:"Vente directe"},
+  {id:16,date:"2026-03-11",produit:"Courge musquée",cat:"Légumes",poids:null,qte:1.3,prix:4,paiement:"Monnaie",canal:"Vente directe"},
+  {id:17,date:"2026-03-12",produit:"Aillet",cat:"Légumes",poids:null,qte:2,prix:5,paiement:"CB",canal:"Vente directe"},
+  {id:18,date:"2026-03-17",produit:"Fraisiers Charlotte",cat:"Fraisiers",poids:null,qte:35,prix:49,paiement:"Monnaie",canal:"Vente directe"},
+  {id:19,date:"2026-03-17",produit:"Fraisiers Charlotte",cat:"Fraisiers",poids:null,qte:5,prix:7,paiement:"Monnaie",canal:"Vente directe"},
+  {id:20,date:"2026-03-17",produit:"Fraisiers Mara",cat:"Fraisiers",poids:null,qte:5,prix:7,paiement:"Monnaie",canal:"Vente directe"},
+  {id:21,date:"2026-03-17",produit:"Fraisiers Charlotte",cat:"Fraisiers",poids:null,qte:25,prix:35,paiement:"Monnaie",canal:"Vente directe"},
+  {id:22,date:"2026-03-17",produit:"Fraisiers Mara",cat:"Fraisiers",poids:null,qte:5,prix:7,paiement:"Monnaie",canal:"Vente directe"},
+  {id:23,date:"2026-03-18",produit:"Fraisiers Charlotte",cat:"Fraisiers",poids:null,qte:6,prix:8.4,paiement:"Monnaie",canal:"Vente directe"},
+  {id:24,date:"2026-03-18",produit:"Fraisiers Mara",cat:"Fraisiers",poids:null,qte:6,prix:8.4,paiement:"Monnaie",canal:"Vente directe"},
+  {id:25,date:"2026-03-19",produit:"Fraisiers Charlotte",cat:"Fraisiers",poids:null,qte:5,prix:7,paiement:"Monnaie",canal:"Vente directe"},
+  {id:26,date:"2026-03-19",produit:"Fraisiers Mara",cat:"Fraisiers",poids:null,qte:5,prix:7,paiement:"Monnaie",canal:"Vente directe"},
+  {id:27,date:"2026-03-19",produit:"Aillet",cat:"Légumes",poids:null,qte:1,prix:2.5,paiement:"Monnaie",canal:"Vente directe"},
+  {id:28,date:"2026-03-19",produit:"Aillet",cat:"Légumes",poids:null,qte:2,prix:5,paiement:"Monnaie",canal:"Vente directe"},
+  {id:29,date:"2026-03-22",produit:"Fraisiers Charlotte",cat:"Fraisiers",poids:null,qte:5,prix:7,paiement:"Monnaie",canal:"Vente directe"},
+  {id:30,date:"2026-03-22",produit:"Fraisiers Mara",cat:"Fraisiers",poids:null,qte:5,prix:7,paiement:"Monnaie",canal:"Vente directe"},
+  {id:31,date:"2026-03-23",produit:"Fraisiers Charlotte",cat:"Fraisiers",poids:null,qte:5,prix:7,paiement:"CB",canal:"Vente directe"},
+  {id:32,date:"2026-03-23",produit:"Fraisiers Mara",cat:"Fraisiers",poids:null,qte:5,prix:7,paiement:"CB",canal:"Vente directe"},
+  {id:33,date:"2026-03-25",produit:"Fraisiers Charlotte",cat:"Fraisiers",poids:null,qte:3,prix:4.5,paiement:"Monnaie",canal:"Vente directe"},
+  {id:34,date:"2026-03-25",produit:"Fraisiers Mara",cat:"Fraisiers",poids:null,qte:3,prix:4.5,paiement:"Monnaie",canal:"Vente directe"},
+  {id:35,date:"2026-03-25",produit:"Courge musquée",cat:"Légumes",poids:0.5,qte:null,prix:1.6,paiement:"Monnaie",canal:"Vente directe"},
+  {id:36,date:"2026-03-27",produit:"Fraisiers Charlotte",cat:"Fraisiers",poids:null,qte:2,prix:3.4,paiement:"Monnaie",canal:"Vente directe"},
+  {id:37,date:"2026-03-27",produit:"Fraisiers Mara",cat:"Fraisiers",poids:null,qte:2,prix:3.4,paiement:"Monnaie",canal:"Vente directe"},
+  {id:38,date:"2026-03-31",produit:"Fraisiers Charlotte + Mara (lot)",cat:"Fraisiers",poids:null,qte:267,prix:379.5,paiement:"Chèques",canal:"Vente directe"},
+  // ---- MARS Biocoop ----
+  {id:39,date:"2026-03-06",produit:"Aillet botte",cat:"Légumes",poids:34,qte:null,prix:145.06,paiement:"Virement",canal:"Biocoop"},
+  // ---- AVRIL Vente directe ----
+  {id:40,date:"2026-04-02",produit:"Fraisiers Charlotte",cat:"Fraisiers",poids:null,qte:3,prix:5.1,paiement:"Monnaie",canal:"Vente directe"},
+  {id:41,date:"2026-04-02",produit:"Aillet",cat:"Légumes",poids:null,qte:2,prix:5,paiement:"Monnaie",canal:"Vente directe"},
+  {id:42,date:"2026-04-02",produit:"Fraisiers Mara",cat:"Fraisiers",poids:null,qte:5,prix:7,paiement:"Virement",canal:"Vente directe"},
+  {id:43,date:"2026-04-02",produit:"Fraisiers Charlotte",cat:"Fraisiers",poids:null,qte:5,prix:7,paiement:"Virement",canal:"Vente directe"},
+  {id:44,date:"2026-04-04",produit:"Fraisiers Mara",cat:"Fraisiers",poids:null,qte:5,prix:7,paiement:"Virement",canal:"Vente directe"},
+  {id:45,date:"2026-04-04",produit:"Fraisiers Charlotte",cat:"Fraisiers",poids:null,qte:5,prix:7,paiement:"Virement",canal:"Vente directe"},
+  {id:46,date:"2026-04-04",produit:"Fraisiers Mara",cat:"Fraisiers",poids:null,qte:4,prix:6,paiement:"Monnaie",canal:"Vente directe"},
+  {id:47,date:"2026-04-04",produit:"Fraisiers Charlotte",cat:"Fraisiers",poids:null,qte:4,prix:6,paiement:"Monnaie",canal:"Vente directe"},
+  {id:48,date:"2026-04-04",produit:"Aillet",cat:"Légumes",poids:null,qte:1,prix:2.5,paiement:"Monnaie",canal:"Vente directe"},
+  {id:49,date:"2026-04-04",produit:"Fraisiers Mara",cat:"Fraisiers",poids:null,qte:10,prix:14,paiement:"Monnaie",canal:"Vente directe"},
+  {id:50,date:"2026-04-04",produit:"Fraisiers Charlotte",cat:"Fraisiers",poids:null,qte:10,prix:14,paiement:"Monnaie",canal:"Vente directe"},
+  {id:51,date:"2026-04-10",produit:"Aillet",cat:"Légumes",poids:null,qte:2,prix:5,paiement:"CB",canal:"Vente directe"},
+  {id:52,date:"2026-04-13",produit:"Fraisiers Mara",cat:"Fraisiers",poids:null,qte:7,prix:8,paiement:"Monnaie",canal:"Vente directe"},
+  {id:53,date:"2026-04-13",produit:"Fraisiers Charlotte",cat:"Fraisiers",poids:null,qte:7,prix:7,paiement:"Monnaie",canal:"Vente directe"},
+  {id:54,date:"2026-04-15",produit:"Aillet",cat:"Légumes",poids:null,qte:3,prix:7.5,paiement:"Virement",canal:"Vente directe"},
+  {id:55,date:"2026-04-17",produit:"Aillet",cat:"Légumes",poids:null,qte:3,prix:7.5,paiement:"Monnaie",canal:"Vente directe"},
+  {id:56,date:"2026-04-17",produit:"Plant tomate",cat:"Plants maraîchers",poids:null,qte:6,prix:10,paiement:"Monnaie",canal:"Vente directe"},
+  {id:57,date:"2026-04-17",produit:"Aillet",cat:"Légumes",poids:null,qte:4,prix:10,paiement:"Monnaie",canal:"Vente directe"},
+  {id:58,date:"2026-04-17",produit:"Basilic",cat:"Aromatiques",poids:null,qte:1,prix:3,paiement:"Monnaie",canal:"Vente directe"},
+  {id:59,date:"2026-04-17",produit:"Plant tomate cerise",cat:"Plants maraîchers",poids:null,qte:2,prix:3,paiement:"Monnaie",canal:"Vente directe"},
+  {id:60,date:"2026-04-17",produit:"Plant courgette",cat:"Plants maraîchers",poids:null,qte:1,prix:1.5,paiement:"Monnaie",canal:"Vente directe"},
+  {id:61,date:"2026-04-17",produit:"Plant concombre",cat:"Plants maraîchers",poids:null,qte:1,prix:1.5,paiement:"Monnaie",canal:"Vente directe"},
+  {id:62,date:"2026-04-17",produit:"Plant tomate cerise",cat:"Plants maraîchers",poids:null,qte:2,prix:3,paiement:"Monnaie",canal:"Vente directe"},
+  {id:63,date:"2026-04-17",produit:"Plant tomate",cat:"Plants maraîchers",poids:null,qte:2,prix:3,paiement:"Monnaie",canal:"Vente directe"},
+  {id:64,date:"2026-04-17",produit:"Plant courgette",cat:"Plants maraîchers",poids:null,qte:2,prix:3,paiement:"CB",canal:"Vente directe"},
+  {id:65,date:"2026-04-17",produit:"Persil",cat:"Aromatiques",poids:null,qte:1,prix:2,paiement:"CB",canal:"Vente directe"},
+  {id:66,date:"2026-04-17",produit:"Plant tomate cerise",cat:"Plants maraîchers",poids:null,qte:2,prix:3,paiement:"CB",canal:"Vente directe"},
+  {id:67,date:"2026-04-17",produit:"Plant tomate",cat:"Plants maraîchers",poids:null,qte:8,prix:12,paiement:"CB",canal:"Vente directe"},
+  {id:68,date:"2026-04-21",produit:"Plant tomate (lot)",cat:"Plants maraîchers",poids:null,qte:45,prix:114.8,paiement:"Virement",canal:"Vente directe"},
+  {id:69,date:"2026-04-23",produit:"Plant tomate",cat:"Plants maraîchers",poids:null,qte:6,prix:9,paiement:"Monnaie",canal:"Vente directe"},
+  {id:70,date:"2026-04-24",produit:"Plant courgette",cat:"Plants maraîchers",poids:null,qte:2,prix:3,paiement:"Monnaie",canal:"Marché"},
+  {id:71,date:"2026-04-24",produit:"Œillets d'inde",cat:"Fleurs",poids:null,qte:2,prix:4,paiement:"Monnaie",canal:"Marché"},
+  {id:72,date:"2026-04-24",produit:"Rose trémière",cat:"Fleurs",poids:null,qte:1,prix:3.5,paiement:"Monnaie",canal:"Marché"},
+  {id:73,date:"2026-04-24",produit:"Plant aubergine",cat:"Plants maraîchers",poids:null,qte:2,prix:3.4,paiement:"Monnaie",canal:"Marché"},
+  {id:74,date:"2026-04-24",produit:"Plant poivrons",cat:"Plants maraîchers",poids:null,qte:2,prix:3.4,paiement:"Monnaie",canal:"Marché"},
+  {id:75,date:"2026-04-24",produit:"Plant tomate",cat:"Plants maraîchers",poids:null,qte:8,prix:12,paiement:"Monnaie",canal:"Marché"},
+  {id:76,date:"2026-04-24",produit:"Œillets d'inde",cat:"Fleurs",poids:null,qte:1,prix:2,paiement:"CB",canal:"Marché"},
+  {id:77,date:"2026-04-24",produit:"Plant salade",cat:"Plants maraîchers",poids:null,qte:1,prix:3.2,paiement:"CB",canal:"Marché"},
+  {id:78,date:"2026-04-24",produit:"Plant tomate",cat:"Plants maraîchers",poids:null,qte:5,prix:7.5,paiement:"CB",canal:"Marché"},
+  {id:79,date:"2026-04-24",produit:"Plant persil",cat:"Aromatiques",poids:null,qte:1,prix:2,paiement:"CB",canal:"Marché"},
+  {id:80,date:"2026-04-24",produit:"Plant tomate grand pot",cat:"Plants maraîchers",poids:null,qte:1,prix:2,paiement:"CB",canal:"Marché"},
+  {id:81,date:"2026-04-24",produit:"Plant tomate",cat:"Plants maraîchers",poids:null,qte:2,prix:3,paiement:"Monnaie",canal:"Marché"},
+  {id:82,date:"2026-04-24",produit:"Plant basilic pot",cat:"Aromatiques",poids:null,qte:1,prix:3,paiement:"Monnaie",canal:"Marché"},
+  {id:83,date:"2026-04-24",produit:"Fèves",cat:"Légumes",poids:0.6,qte:null,prix:2.4,paiement:"Monnaie",canal:"Marché"},
+  {id:84,date:"2026-04-24",produit:"Oignon cébette botte",cat:"Légumes",poids:null,qte:2,prix:4,paiement:"Monnaie",canal:"Marché"},
+  {id:85,date:"2026-04-24",produit:"Fèves",cat:"Légumes",poids:0.55,qte:null,prix:2.3,paiement:"Monnaie",canal:"Marché"},
+  {id:86,date:"2026-04-24",produit:"Plant basilic godet",cat:"Aromatiques",poids:null,qte:1,prix:2,paiement:"Monnaie",canal:"Marché"},
+  {id:87,date:"2026-04-24",produit:"Plant cosmos",cat:"Fleurs",poids:null,qte:1,prix:1.5,paiement:"Monnaie",canal:"Marché"},
+  {id:88,date:"2026-04-24",produit:"Capucine",cat:"Fleurs",poids:null,qte:1,prix:2,paiement:"Monnaie",canal:"Marché"},
+  {id:89,date:"2026-04-24",produit:"Oignon cébette botte",cat:"Légumes",poids:null,qte:1,prix:2,paiement:"CB",canal:"Marché"},
+  {id:90,date:"2026-04-24",produit:"Plant tomate",cat:"Plants maraîchers",poids:null,qte:13,prix:19.5,paiement:"CB",canal:"Marché"},
+  {id:91,date:"2026-04-24",produit:"Plant basilic godet",cat:"Aromatiques",poids:null,qte:1,prix:2,paiement:"CB",canal:"Marché"},
+  {id:92,date:"2026-04-24",produit:"Fèves",cat:"Légumes",poids:0.2,qte:null,prix:0.8,paiement:"Virement",canal:"Marché"},
+  {id:93,date:"2026-04-24",produit:"Navet",cat:"Légumes",poids:0.55,qte:null,prix:1.6,paiement:"Virement",canal:"Marché"},
+  {id:94,date:"2026-04-24",produit:"Plant basilic pot",cat:"Aromatiques",poids:null,qte:1,prix:3,paiement:"Virement",canal:"Marché"},
+  {id:95,date:"2026-04-24",produit:"Plant persil godet",cat:"Aromatiques",poids:null,qte:2,prix:4,paiement:"Virement",canal:"Marché"},
+  {id:96,date:"2026-04-24",produit:"Capucine",cat:"Fleurs",poids:null,qte:4,prix:8,paiement:"CB",canal:"Marché"},
+  {id:97,date:"2026-04-24",produit:"Plant tomate",cat:"Plants maraîchers",poids:null,qte:9,prix:13.5,paiement:"CB",canal:"Marché"},
+  {id:98,date:"2026-04-24",produit:"Plant basilic godet",cat:"Aromatiques",poids:null,qte:2,prix:4,paiement:"CB",canal:"Marché"},
+  {id:99,date:"2026-04-24",produit:"Plant persil godet",cat:"Aromatiques",poids:null,qte:2,prix:4,paiement:"CB",canal:"Marché"},
+  {id:100,date:"2026-04-24",produit:"Plants de tomate",cat:"Plants maraîchers",poids:null,qte:28,prix:42,paiement:"Virement",canal:"Marché"},
+  {id:101,date:"2026-04-24",produit:"Plant basilic pot",cat:"Aromatiques",poids:null,qte:2,prix:6,paiement:"Virement",canal:"Marché"},
+  {id:102,date:"2026-04-24",produit:"Arrondi",cat:"Autre",poids:null,qte:null,prix:19,paiement:"Virement",canal:"Marché"},
+  {id:103,date:"2026-04-27",produit:"Plant de tomate",cat:"Plants maraîchers",poids:null,qte:8,prix:12,paiement:"Monnaie",canal:"Vente directe"},
+  {id:104,date:"2026-04-27",produit:"Plant de courgette",cat:"Plants maraîchers",poids:null,qte:2,prix:3,paiement:"Monnaie",canal:"Vente directe"},
+  {id:105,date:"2026-04-27",produit:"Plant de concombre",cat:"Plants maraîchers",poids:null,qte:1,prix:1.5,paiement:"Monnaie",canal:"Vente directe"},
+  {id:106,date:"2026-04-27",produit:"Plant basilic pot",cat:"Aromatiques",poids:null,qte:1,prix:3,paiement:"Monnaie",canal:"Vente directe"},
+  // ---- AVRIL Biocoop ----
+  {id:107,date:"2026-04-03",produit:"Aillet botte",cat:"Légumes",poids:null,qte:null,prix:25.5,paiement:"Virement",canal:"Biocoop"},
+  {id:108,date:"2026-04-10",produit:"Aillet botte",cat:"Légumes",poids:null,qte:22,prix:33,paiement:"Virement",canal:"Biocoop"},
+  {id:109,date:"2026-04-17",produit:"Aillet botte",cat:"Légumes",poids:null,qte:30,prix:45,paiement:"Virement",canal:"Biocoop"},
+  {id:110,date:"2026-04-24",produit:"Persil",cat:"Aromatiques",poids:null,qte:10,prix:20,paiement:"Virement",canal:"Biocoop"},
+];
+
+const CATALOG_PRODUCTS = [
+  {nom:"Butternut",cat:"Légumes",emoji:"🎃",prixDefault:3},
+  {nom:"Courge musquée",cat:"Légumes",emoji:"🥒",prixDefault:3.2},
+  {nom:"Aillet",cat:"Légumes",emoji:"🧅",prixDefault:2.5},
+  {nom:"Roquette",cat:"Légumes",emoji:"🥬",prixDefault:null},
+  {nom:"Aillet botte",cat:"Légumes",emoji:"🌿",prixDefault:null},
+  {nom:"Fèves",cat:"Légumes",emoji:"🫘",prixDefault:null},
+  {nom:"Navet",cat:"Légumes",emoji:"🌱",prixDefault:null},
+  {nom:"Oignon cébette botte",cat:"Légumes",emoji:"🧅",prixDefault:2},
+  {nom:"Fraisiers Charlotte",cat:"Fraisiers",emoji:"🍓",prixDefault:1.4},
+  {nom:"Fraisiers Mara",cat:"Fraisiers",emoji:"🍓",prixDefault:1.4},
+  {nom:"Plant tomate",cat:"Plants maraîchers",emoji:"🍅",prixDefault:1.5},
+  {nom:"Plant tomate cerise",cat:"Plants maraîchers",emoji:"🍅",prixDefault:1.5},
+  {nom:"Plant courgette",cat:"Plants maraîchers",emoji:"🫑",prixDefault:1.5},
+  {nom:"Plant concombre",cat:"Plants maraîchers",emoji:"🥒",prixDefault:1.5},
+  {nom:"Plant aubergine",cat:"Plants maraîchers",emoji:"🍆",prixDefault:1.7},
+  {nom:"Plant poivrons",cat:"Plants maraîchers",emoji:"🫑",prixDefault:1.7},
+  {nom:"Plant salade",cat:"Plants maraîchers",emoji:"🥗",prixDefault:3.2},
+  {nom:"Basilic",cat:"Aromatiques",emoji:"🌿",prixDefault:3},
+  {nom:"Persil",cat:"Aromatiques",emoji:"🌿",prixDefault:2},
+  {nom:"Plant basilic pot",cat:"Aromatiques",emoji:"🌿",prixDefault:3},
+  {nom:"Plant basilic godet",cat:"Aromatiques",emoji:"🌿",prixDefault:2},
+  {nom:"Plant persil godet",cat:"Aromatiques",emoji:"🌿",prixDefault:2},
+  {nom:"Œillets d'inde",cat:"Fleurs",emoji:"🌼",prixDefault:2},
+  {nom:"Rose trémière",cat:"Fleurs",emoji:"🌸",prixDefault:3.5},
+  {nom:"Capucine",cat:"Fleurs",emoji:"🌺",prixDefault:2},
+  {nom:"Plant cosmos",cat:"Fleurs",emoji:"🌸",prixDefault:1.5},
+];
+
+// ===================== STATE =====================
+let sales = [];
+let cart = [];
+let currentProduct = null;
+let customProducts = [];
+let nextId = 200;
+let charts = {};
+
+const MONTHS = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+const CAT_COLORS = {
+  "Légumes":"#52b788","Plants maraîchers":"#40916c","Aromatiques":"#1b4332",
+  "Fraisiers":"#fb7185","Fleurs":"#c084fc","Biocoop":"#60a5fa","Autre":"#9ca3af"
+};
+const CANAL_COLORS = {"Vente directe":"#40916c","Biocoop":"#3b82f6","Marché":"#f59e0b"};
+
+// ===================== INIT =====================
+function init() {
+  const stored = localStorage.getItem('ventes2026_sales');
+  const storedCustom = localStorage.getItem('ventes2026_custom_products');
+  sales = stored ? JSON.parse(stored) : [...INITIAL_SALES];
+  customProducts = storedCustom ? JSON.parse(storedCustom) : [];
+  nextId = sales.length > 0 ? Math.max(...sales.map(s=>s.id)) + 1 : 200;
+
+  // Header date
+  const now = new Date();
+  document.getElementById('headerDate').textContent = now.toLocaleDateString('fr-FR', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('saleDate').value = now.toISOString().split('T')[0];
+  document.getElementById('ticketDateDisplay').textContent = now.toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'});
+
+  renderDashboard();
+  renderCatalog();
+  renderHistory();
+}
+
+function saveSales() {
+  localStorage.setItem('ventes2026_sales', JSON.stringify(sales));
+}
+function saveCustomProducts() {
+  localStorage.setItem('ventes2026_custom_products', JSON.stringify(customProducts));
+}
+
+// ===================== TABS =====================
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'historique') renderHistory();
+}
+
+// ===================== HELPERS =====================
+function fmt(n) { return n.toFixed(2).replace('.', ',') + ' €'; }
+function fmtShort(n) { return n.toFixed(2).replace('.', ',') + ' €'; }
+function getMonth(date) { return date.substring(5, 7); }
+function getMonthNum(s) { return parseInt(s.date.substring(5,7)); }
+
+// ===================== DASHBOARD =====================
+function renderDashboard() {
+  const total = sales.reduce((s,x) => s + x.prix, 0);
+  const now = new Date();
+  const curMonth = String(now.getMonth() + 1).padStart(2, '0');
+  const monthSales = sales.filter(s => getMonth(s.date) === curMonth);
+  const monthTotal = monthSales.reduce((s,x) => s + x.prix, 0);
+  const biocoop = sales.filter(s => s.canal === 'Biocoop');
+  const bioTotal = biocoop.reduce((s,x) => s + x.prix, 0);
+  const directe = sales.filter(s => s.canal !== 'Biocoop');
+  const directeTotal = directe.reduce((s,x) => s + x.prix, 0);
+
+  document.getElementById('kpi-total').textContent = fmt(total);
+  document.getElementById('kpi-total-sub').textContent = `Directe: ${fmt(directeTotal)}`;
+  document.getElementById('kpi-month').textContent = fmt(monthTotal);
+  document.getElementById('kpi-month-sub').textContent = MONTHS[now.getMonth()];
+  document.getElementById('kpi-count').textContent = sales.length;
+  document.getElementById('kpi-count-sub').textContent = `${monthSales.length} ce mois`;
+  document.getElementById('kpi-biocoop').textContent = fmt(bioTotal);
+  document.getElementById('kpi-biocoop-sub').textContent = `${((bioTotal/total)*100).toFixed(1)}% du CA total`;
+
+  // Monthly chart
+  const monthlyData = Array(12).fill(0);
+  const monthlyBio = Array(12).fill(0);
+  sales.forEach(s => {
+    const m = parseInt(getMonth(s.date)) - 1;
+    if (m >= 0 && m < 12) {
+      monthlyData[m] += s.prix;
+      if (s.canal === 'Biocoop') monthlyBio[m] += s.prix;
+    }
+  });
+
+  if (charts.months) charts.months.destroy();
+  charts.months = new Chart(document.getElementById('chartMonths'), {
+    type: 'bar',
+    data: {
+      labels: MONTHS,
+      datasets: [
+        { label: 'Vente directe / Marché', data: monthlyData.map((v,i) => v - monthlyBio[i]), backgroundColor: '#52b788', borderRadius: 6 },
+        { label: 'Biocoop', data: monthlyBio, backgroundColor: '#60a5fa', borderRadius: 6 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { position: 'top', labels: { font: { size: 12 }, boxWidth: 12 } } },
+      scales: {
+        x: { stacked: true, grid: { display: false } },
+        y: { stacked: true, ticks: { callback: v => v + ' €' }, grid: { color: '#f0fdf4' } }
+      }
+    }
+  });
+
+  // Category donut
+  const catTotals = {};
+  sales.forEach(s => { catTotals[s.cat] = (catTotals[s.cat]||0) + s.prix; });
+  const catLabels = Object.keys(catTotals);
+  const catVals = catLabels.map(c => catTotals[c]);
+  const catColors = catLabels.map(c => CAT_COLORS[c] || '#9ca3af');
+
+  if (charts.cats) charts.cats.destroy();
+  charts.cats = new Chart(document.getElementById('chartCats'), {
+    type: 'doughnut',
+    data: { labels: catLabels, datasets: [{ data: catVals, backgroundColor: catColors, borderWidth: 2, borderColor: '#fff' }] },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 10 } } },
+      cutout: '68%'
+    }
+  });
+
+  // Top products
+  const prodTotals = {};
+  sales.forEach(s => { prodTotals[s.produit] = (prodTotals[s.produit]||0) + s.prix; });
+  const sorted = Object.entries(prodTotals).sort((a,b) => b[1]-a[1]).slice(0,8);
+  const maxProd = sorted[0]?.[1] || 1;
+  const catForProd = {};
+  sales.forEach(s => { catForProd[s.produit] = s.cat; });
+
+  document.getElementById('topProductsTable').innerHTML = `
+    <thead><tr><th>Produit</th><th>CA</th><th>%</th></tr></thead>
+    <tbody>${sorted.map(([p,v]) => `
+      <tr>
+        <td>
+          <span class="badge badge-${(catForProd[p]||'autre').toLowerCase().replace(/ /g,'-').replace('é','e').replace('è','e')}">${p}</span>
+          <div class="progress-bar" style="margin-top:4px"><div class="progress-bar-fill" style="width:${(v/maxProd*100).toFixed(0)}%"></div></div>
+        </td>
+        <td style="font-weight:700;color:var(--green-800)">${fmt(v)}</td>
+        <td style="color:var(--gray-500);font-size:12px">${((v/total)*100).toFixed(1)}%</td>
+      </tr>`).join('')}
+    </tbody>
+  `;
+
+  // Payment pie
+  const payTotals = {};
+  sales.forEach(s => { payTotals[s.paiement] = (payTotals[s.paiement]||0) + s.prix; });
+  const payLabels = Object.keys(payTotals);
+  const payVals = payLabels.map(k => payTotals[k]);
+  const payColors = ['#40916c','#74c69d','#3b82f6','#f59e0b','#c084fc'];
+
+  if (charts.pay) charts.pay.destroy();
+  charts.pay = new Chart(document.getElementById('chartPaiement'), {
+    type: 'doughnut',
+    data: { labels: payLabels, datasets: [{ data: payVals, backgroundColor: payColors, borderWidth: 2, borderColor: '#fff' }] },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 10 } } },
+      cutout: '60%'
+    }
+  });
+
+  // Canal stats
+  const canalTotals = {};
+  sales.forEach(s => { canalTotals[s.canal] = (canalTotals[s.canal]||0) + s.prix; });
+  document.getElementById('canalStats').innerHTML = Object.entries(canalTotals).sort((a,b)=>b[1]-a[1]).map(([c,v]) => `
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+        <span style="font-size:13px;font-weight:600;color:var(--gray-700)">${c}</span>
+        <span style="font-size:14px;font-weight:700;color:var(--green-800)">${fmt(v)}</span>
+      </div>
+      <div class="progress-bar"><div class="progress-bar-fill" style="background:${CANAL_COLORS[c]||'#52b788'};width:${(v/total*100).toFixed(0)}%"></div></div>
+      <div style="font-size:11px;color:var(--gray-500);margin-top:3px">${((v/total)*100).toFixed(1)}% du CA</div>
+    </div>
+  `).join('');
+}
+
+// ===================== CAISSE =====================
+let activeCat = 'Tous';
+
+function allProducts() {
+  return [...CATALOG_PRODUCTS, ...customProducts];
+}
+
+function renderCatalog() {
+  const cats = ['Tous', ...new Set(allProducts().map(p => p.cat))];
+  document.getElementById('catFilter').innerHTML = cats.map(c =>
+    `<button class="cat-btn ${c===activeCat?'active':''}" onclick="filterCat('${c}')">${c}</button>`
+  ).join('');
+
+  const filtered = activeCat === 'Tous' ? allProducts() : allProducts().filter(p => p.cat === activeCat);
+  document.getElementById('productsGrid').innerHTML = filtered.map(p => `
+    <button class="product-btn" onclick="openProductModal('${p.nom.replace(/'/g,"\\'")}')">
+      <span class="p-emoji">${p.emoji||'🌱'}</span>
+      <span class="p-name">${p.nom}</span>
+      <span class="p-cat">${p.cat}</span>
+    </button>
+  `).join('');
+}
+
+function filterCat(cat) {
+  activeCat = cat;
+  renderCatalog();
+}
+
+function openProductModal(name) {
+  currentProduct = allProducts().find(p => p.nom === name);
+  document.getElementById('modalProductTitle').textContent = `Ajouter : ${name}`;
+  document.getElementById('modalQte').value = '';
+  document.getElementById('modalPoids').value = '';
+  document.getElementById('modalPrix').value = currentProduct?.prixDefault || '';
+  document.getElementById('modalProduct').classList.add('show');
+  document.getElementById('modalQte').focus();
+}
+
+function confirmAddToCart() {
+  const qte = parseFloat(document.getElementById('modalQte').value) || null;
+  const poids = parseFloat(document.getElementById('modalPoids').value) || null;
+  const prix = parseFloat(document.getElementById('modalPrix').value);
+  if (!prix || prix <= 0) { alert('Veuillez saisir un prix valide.'); return; }
+
+  cart.push({
+    id: Date.now(),
+    produit: currentProduct.nom,
+    cat: currentProduct.cat,
+    qte, poids, prix
+  });
+  closeModal('modalProduct');
+  renderCart();
+}
+
+function renderCart() {
+  const body = document.getElementById('ticketBody');
+  const total = cart.reduce((s,x) => s+x.prix, 0);
+  document.getElementById('ticketTotal').textContent = fmt(total);
+
+  if (cart.length === 0) {
+    body.innerHTML = '<div class="ticket-empty">Sélectionnez des produits<br>dans le catalogue</div>';
+    return;
+  }
+  body.innerHTML = cart.map(item => `
+    <div class="ticket-item">
+      <div class="ticket-item-name">${item.produit}</div>
+      <div class="ticket-item-qty">${item.qte ? item.qte+'u' : item.poids ? item.poids+'kg' : ''}</div>
+      <div class="ticket-item-price">${fmtShort(item.prix)}</div>
+      <button class="ticket-item-del" onclick="removeFromCart(${item.id})">✕</button>
+    </div>
+  `).join('');
+}
+
+function removeFromCart(id) {
+  cart = cart.filter(i => i.id !== id);
+  renderCart();
+}
+
+function clearCart() {
+  cart = [];
+  renderCart();
+}
+
+function validateSale() {
+  if (cart.length === 0) { showToast('⚠️ Le ticket est vide'); return; }
+  const date = document.getElementById('saleDate').value;
+  const paiement = document.getElementById('salePaiement').value;
+  const canal = document.getElementById('saleCanal').value;
+
+  cart.forEach(item => {
+    sales.push({
+      id: nextId++,
+      date, produit: item.produit, cat: item.cat,
+      poids: item.poids, qte: item.qte, prix: item.prix,
+      paiement, canal
+    });
+  });
+
+  saveSales();
+  const total = cart.reduce((s,x) => s+x.prix, 0);
+  clearCart();
+  showToast(`✅ Vente enregistrée : ${fmt(total)}`);
+  renderDashboard();
+}
+
+function openNewProductModal() {
+  document.getElementById('newProdName').value = '';
+  document.getElementById('newProdPrix').value = '';
+  document.getElementById('modalNewProduct').classList.add('show');
+  document.getElementById('newProdName').focus();
+}
+
+function confirmNewProduct() {
+  const nom = document.getElementById('newProdName').value.trim();
+  const cat = document.getElementById('newProdCat').value;
+  const prix = parseFloat(document.getElementById('newProdPrix').value) || null;
+  if (!nom) { alert('Veuillez saisir un nom de produit.'); return; }
+
+  customProducts.push({ nom, cat, emoji: '🌱', prixDefault: prix });
+  saveCustomProducts();
+  closeModal('modalNewProduct');
+  renderCatalog();
+  showToast(`✅ Produit "${nom}" ajouté`);
+}
+
+// ===================== HISTORIQUE =====================
+function renderHistory() {
+  const month = document.getElementById('filterMonth').value;
+  const cat = document.getElementById('filterCat').value;
+  const canal = document.getElementById('filterCanal').value;
+  const search = document.getElementById('filterSearch').value.toLowerCase();
+
+  let filtered = [...sales].sort((a,b) => b.date.localeCompare(a.date));
+  if (month) filtered = filtered.filter(s => getMonth(s.date) === month);
+  if (cat) filtered = filtered.filter(s => s.cat === cat);
+  if (canal) filtered = filtered.filter(s => s.canal === canal);
+  if (search) filtered = filtered.filter(s => s.produit.toLowerCase().includes(search));
+
+  const total = filtered.reduce((s,x) => s+x.prix, 0);
+  const body = document.getElementById('histBody');
+  const foot = document.getElementById('histFoot');
+
+  if (filtered.length === 0) {
+    body.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🔍</div>Aucune vente trouvée</div></td></tr>`;
+    foot.innerHTML = '';
+    return;
+  }
+
+  const catClass = c => 'badge badge-' + (c||'autre').toLowerCase().replace(/ /g,'-').replace(/é/g,'e').replace(/è/g,'e');
+
+  body.innerHTML = filtered.map(s => `
+    <tr>
+      <td>${new Date(s.date).toLocaleDateString('fr-FR', {day:'2-digit',month:'short',year:'numeric'})}</td>
+      <td style="font-weight:500">${s.produit}</td>
+      <td><span class="${catClass(s.cat)}">${s.cat}</span></td>
+      <td style="color:var(--gray-500)">${s.qte ? s.qte+' u' : s.poids ? s.poids+' kg' : '—'}</td>
+      <td style="font-weight:700;color:var(--green-800)">${fmt(s.prix)}</td>
+      <td>${s.paiement}</td>
+      <td><span style="color:${CANAL_COLORS[s.canal]||'#6b7280'};font-weight:500">${s.canal}</span></td>
+      <td><button class="delete-btn" onclick="deleteSale(${s.id})" title="Supprimer">🗑</button></td>
+    </tr>
+  `).join('');
+
+  foot.innerHTML = `<tr class="hist-total-row">
+    <td colspan="4">Total (${filtered.length} vente${filtered.length>1?'s':''})</td>
+    <td colspan="4" style="color:var(--green-800)">${fmt(total)}</td>
+  </tr>`;
+}
+
+function deleteSale(id) {
+  if (!confirm('Supprimer cette vente ?')) return;
+  sales = sales.filter(s => s.id !== id);
+  saveSales();
+  renderHistory();
+  renderDashboard();
+  showToast('🗑 Vente supprimée');
+}
+
+function resetFilters() {
+  document.getElementById('filterMonth').value = '';
+  document.getElementById('filterCat').value = '';
+  document.getElementById('filterCanal').value = '';
+  document.getElementById('filterSearch').value = '';
+  renderHistory();
+}
+
+// ===================== MODALS =====================
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+document.querySelectorAll('.modal-backdrop').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); });
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.querySelectorAll('.modal-backdrop.show').forEach(m => m.classList.remove('show'));
+});
+
+// ===================== TOAST =====================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ===================== START =====================
+init();
+</script>
+</body>
+</html>

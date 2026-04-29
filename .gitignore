@@ -1,0 +1,15 @@
+# Dossiers générés
+output/
+uploads/
+thumbs/
+memes/
+__pycache__/
+*.pyc
+*.pyo
+
+# Fichiers système
+.DS_Store
+*.mov
+*.mp4
+history.json
+schedule.json
